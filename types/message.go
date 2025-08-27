@@ -1,6 +1,9 @@
 package types
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type Message struct {
 	// Unique message identifier inside this chat.
@@ -16,11 +19,14 @@ type Message struct {
 	// to which the message belongs; for supergroups only
 	MessageThreadID int `json:"message_thread_id,omitempty"`
 
+	// Optional. Information about the direct messages chat topic that contains the message
+	DirectMessagesTopic *DirectMessagesTopic `json:"direct_messages_topic,omitempty"`
+
 	// Optional. Sender of the message; may be empty for
 	// messages sent to channels. For backward compatibility,
 	// if the message was sent on behalf of a chat, the
 	// field contains a fake sender user in non-channel chats
-	From *any `json:"from,omitempty"`
+	From *User `json:"from,omitempty"`
 
 	// Optional. Sender of the message when sent on behalf
 	// of a chat. For example, the supergroup itself for
@@ -30,7 +36,7 @@ type Message struct {
 	// compatibility, if the message was sent on behalf
 	// of a chat, the field from contains a fake sender
 	// user in non-channel chats.
-	SenderChat *any `json:"sender_chat,omitempty"`
+	SenderChat *Chat `json:"sender_chat,omitempty"`
 
 	// Optional. If the sender of the message boosted the
 	// chat, the number of boosts added by the user
@@ -39,7 +45,7 @@ type Message struct {
 	// Optional. The bot that actually sent the message on behalf
 	// of the business account. Available only for outgoing
 	// messages sent on behalf of the connected business account.
-	SenderBusinessBot *any `json:"sender_business_bot,omitempty"`
+	SenderBusinessBot *User `json:"sender_business_bot,omitempty"`
 
 	// Date the message was sent in Unix time. It is always a
 	// positive number, representing a valid date.
@@ -50,13 +56,13 @@ type Message struct {
 	// the message belongs to a chat of the corresponding business
 	// account that is independent from any potential bot chat
 	// which might share the same identifier.
-	BusinessConnectionID *any `json:"business_connection_id,omitempty"`
+	BusinessConnectionID *string `json:"business_connection_id,omitempty"`
 
 	// Chat the message belongs to
-	Chat *any `json:"chat"`
+	Chat *Chat `json:"chat"`
 
 	// Optional. Information about the original message for forwarded messages
-	ForwardOrigin *any `json:"forward_origin,omitempty"`
+	ForwardOrigin *MessageOrigin `json:"forward_origin,omitempty"`
 
 	// Optional. True, if the message is sent to a forum topic
 	IsTopicMessage bool `json:"is_topic_message,omitempty"`
@@ -69,7 +75,7 @@ type Message struct {
 	// thread, the original message. Note that the Message
 	// object in this field will not contain further
 	// reply_to_message fields even if it itself is a reply.
-	ReplyToMessage *any `json:"reply_to_message,omitempty"`
+	ReplyToMessage *Message `json:"reply_to_message,omitempty"`
 
 	// Optional. Information about the message that is being
 	// replied to, which may come from another chat or forum topic
@@ -77,13 +83,16 @@ type Message struct {
 
 	// Optional. For replies that quote part of the
 	// original message, the quoted part of the message
-	Qoute *any `json:"quote,omitempty"`
+	Qoute *TextQuote `json:"quote,omitempty"`
 
 	// Optional. For replies to a story, the original story
-	ReplyToStory *any `json:"reply_to_story,omitempty"`
+	ReplyToStory *Story `json:"reply_to_story,omitempty"`
+
+	// Optional. Identifier of the specific checklist task that is being replied to
+	ReplyToChecklistTaskID int `json:"reply_to_checklist_task_id,omitempty"`
 
 	// Optional. Bot through which the message was sent
-	ViaBot *any `json:"via_bot,omitempty"`
+	ViaBot *User `json:"via_bot,omitempty"`
 
 	// Optional. Date the message was last edited in Unix time
 	EditDate int `json:"edit_date,omitempty"`
@@ -114,11 +123,17 @@ type Message struct {
 
 	// Optional. For text messages, special entities like usernames,
 	// URLs, bot commands, etc. that appear in the text
-	Entities []any `json:"entities,omitempty"`
+	Entities []MessageEntity `json:"entities,omitempty"`
 
 	// Optional. Options used for link preview generation for the message,
 	// if it is a text message and link preview options were changed
-	LinkPreviewOptions *any `json:"link_preview_options,omitempty"`
+	LinkPreviewOptions *LinkPreviewOptions `json:"link_preview_options,omitempty"`
+
+	// Optional. Information about suggested post parameters if
+	// the message is a suggested post in a channel direct messages
+	// chat. If the message is an approved or declined suggested
+	// post, then it can't be edited.
+	SuggestedPostInfo *SuggestedPostInfo `json:"suggested_post_info,omitempty"`
 
 	// Optional. Unique identifier of the message effect added to the message
 	EffectID string `json:"effect_id,omitempty"`
@@ -144,7 +159,7 @@ type Message struct {
 	Sticker *any `json:"sticker,omitempty"`
 
 	// Optional. Message is a forwarded story
-	Story *any `json:"story,omitempty"`
+	Story *Story `json:"story,omitempty"`
 
 	// Optional. Message is a video, information about the video
 	Video *any `json:"video,omitempty"`
@@ -161,7 +176,7 @@ type Message struct {
 
 	// Optional. For messages with a caption, special entities like
 	// usernames, URLs, bot commands, etc. that appear in the caption
-	CaptionEntities []any `json:"caption_entities,omitempty"`
+	CaptionEntities []MessageEntity `json:"caption_entities,omitempty"`
 
 	// Optional. True, if the caption must be shown above the message media
 	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
@@ -179,7 +194,7 @@ type Message struct {
 	Game *any `json:"game,omitempty"`
 
 	// Optional. Message is a native poll, information about the poll
-	Poll *any `json:"poll,omitempty"`
+	Poll *Poll `json:"poll,omitempty"`
 
 	// Optional. Message is a venue, information about
 	// the venue. For backward compatibility, when this
@@ -187,16 +202,16 @@ type Message struct {
 	Venue *any `json:"venue,omitempty"`
 
 	// Optional. Message is a shared location, information about the location
-	Location *any `json:"location,omitempty"`
+	Location *Location `json:"location,omitempty"`
 
 	// Optional. New members that were added to the group
 	// or supergroup and information about them (the bot
 	// itself may be one of these members)
-	NewChatMembers []any `json:"new_chat_members,omitempty"`
+	NewChatMembers []User `json:"new_chat_members,omitempty"`
 
 	// Optional. A member was removed from the group, information
 	// about them (this member may be the bot itself)
-	LeftChatMember *any `json:"left_chat_member,omitempty"`
+	LeftChatMember *User `json:"left_chat_member,omitempty"`
 
 	// Optional. A chat title was changed to this value
 	NewChatTitle string `json:"new_chat_title,omitempty"`
@@ -226,7 +241,7 @@ type Message struct {
 	ChannelChatCreated bool `json:"channel_chat_created,omitempty"`
 
 	// Optional. Service message: auto-delete timer settings changed in the chat
-	MessageAutoDeleteTimerChanged *any `json:"message_auto_delete_timer_changed,omitempty"`
+	MessageAutoDeleteTimerChanged *MessageAutoDeleteTimerChanged `json:"message_auto_delete_timer_changed,omitempty"`
 
 	// Optional. The group has been migrated to a supergroup
 	// with the specified identifier. This number may have
@@ -253,7 +268,7 @@ type Message struct {
 
 	// Optional. Message is an invoice for a payment, information
 	// about the invoice. https://core.telegram.org/bots/api#payments
-	Invoice *any `json:"invoice,omitempty"`
+	Invoice *Invoice `json:"invoice,omitempty"`
 
 	// Optional. Message is a service message about a
 	// successful payment, information about the payment.
@@ -351,14 +366,90 @@ type Message struct {
 }
 
 func (m *Message) Answer(text string) error {
+	if m.Chat == nil {
+		return errors.New("message chat is nil")
+	}
+
+	// TODO: Implement the logic to send a message to the chat.
+
 	return nil
 }
 
 func (m *Message) Reply(text string) error {
+	if m.Chat == nil {
+		return errors.New("message chat is nil")
+	}
+
+	// TODO: Implement the logic to reply to the message.
+
 	return nil
 }
 
 // Time converts the message timestamp into a Time.
 func (m *Message) Time() time.Time {
 	return time.Unix(int64(m.Date), 0)
+}
+
+type InaccessibleMessage struct {
+	// Chat the message belonged to
+	Chat Chat `json:"chat"`
+
+	// Unique message identifier inside the chat
+	MessageID int `json:"message_id"`
+
+	// Always 0. The field can be used to differentiate
+	// regular and inaccessible messages.
+	Date int `json:"date"`
+}
+
+type MessageEntity struct {
+	// Type of the entity. Currently, can be “mention” (@username),
+	// “hashtag” (#hashtag or #hashtag@chatusername), “cashtag”
+	// ($USD or $USD@chatusername), “bot_command” (/start@jobs_bot),
+	// “url” (https://telegram.org), “email” (do-not-reply@telegram.org),
+	// “phone_number” (+1-212-555-0123), “bold” (bold text), “italic”
+	// (italic text), “underline” (underlined text), “strikethrough”
+	// (strikethrough text), “spoiler” (spoiler message), “blockquote”
+	// (block quotation), “expandable_blockquote” (collapsed-by-default
+	// block quotation), “code” (monowidth string), “pre” (monowidth block),
+	// “text_link” (for clickable text URLs), “text_mention” (for users
+	// without usernames), “custom_emoji” (for inline custom emoji stickers)
+	Type string `json:"type"`
+
+	// Offset in UTF-16 code units to the start of the entity
+	Offset int `json:"offset"`
+
+	// Length of the entity in UTF-16 code units
+	Length int `json:"length"`
+
+	// Optional. For “text_link” only, URL that will be
+	// opened after user taps on the text
+	Url string `json:"url,omitempty"`
+
+	// Optional. For “text_mention” only, the mentioned user
+	User *User `json:"user,omitempty"`
+
+	// Optional. For “pre” only, the programming language of the entity text
+	Language string `json:"language,omitempty"`
+
+	// Optional. For “custom_emoji” only, unique identifier of the custom emoji.
+	// Use getCustomEmojiStickers to get full information about the sticker
+	CustomEmojiID string `json:"custom_emoji_id,omitempty"`
+}
+
+// This object represents a service message about a change in auto-delete timer settings.
+type MessageAutoDeleteTimerChanged struct {
+	// New auto-delete time for messages in the chat; in seconds
+	MessageAutoDeleteTime int `json:"message_auto_delete_time"`
+}
+
+type MessageOrigin struct{}
+
+type DirectMessagesTopic struct {
+	// Unique identifier of the topic
+	TopicID int `json:"topic_id"`
+
+	// Optional. Information about the user that created the topic.
+	// Currently, it is always present
+	USer User `json:"user,omitempty"`
 }
