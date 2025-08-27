@@ -84,7 +84,7 @@ type Update struct {
 
 	// Optional. A user changed their answer in a non-anonymous poll.
 	// Bots receive new votes only in polls that were sent by the bot itself.
-	PollAnswer *Poll `json:"poll_answer,omitempty"`
+	PollAnswer *PollAnswer `json:"poll_answer,omitempty"`
 
 	// Optional. The bot's chat member status was updated in a chat.
 	// For private chats, this update is received only when the bot
