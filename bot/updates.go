@@ -25,7 +25,7 @@ type GetUpdateParams struct {
 	// update_id. The negative offset can be specified to retrieve updates
 	// starting from -offset update from the end of the updates queue.
 	// All previous updates will be forgotten.
-	Offset uint `json:"offset,omitempty"`
+	Offset int `json:"offset,omitempty"`
 
 	// Limits the number of updates to be retrieved.
 	// Values between 1-100 are accepted. Defaults to 100.
