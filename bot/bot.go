@@ -19,14 +19,14 @@ const (
 var errInvalidType = errors.New("invalid type")
 
 type Bot struct {
-	Token        string
+	token        string
 	urlWithToken string
 	api          *api.ApiClient
 }
 
 func NewBot(token string) *Bot {
 	return &Bot{
-		Token:        token,
+		token:        token,
 		urlWithToken: fmt.Sprintf("%s/bot%s", baseUrl, token),
 		api:          api.NewClient(&http.Client{}),
 	}

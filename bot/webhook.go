@@ -22,8 +22,9 @@ const (
 
 type webhookResponse struct {
 	Ok          bool   `json:"ok"`
-	Result      bool   `json:"result"`
+	ErrorCode   int    `json:"error_code"`
 	Description string `json:"description"`
+	Result      bool   `json:"result"`
 }
 
 type SetWebhookParameters struct {
@@ -153,19 +154,24 @@ func (b *Bot) SetWebhook(params SetWebhookParameters) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("telegram API returned non-200 status: %d", resp.StatusCode)
-	}
-
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf(
+			"failed to read response body: %w, status: %d", err, resp.StatusCode,
+		)
 	}
 
 	var result webhookResponse
 
 	if err := json.Unmarshal(responseBody, &result); err != nil {
 		return "", fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf(
+			"telegram API returned non-200 status: %d, description: %s",
+			resp.StatusCode, result.Description,
+		)
 	}
 
 	if !result.Ok {
@@ -205,26 +211,39 @@ func (b *Bot) setWebhookWithCertificate(fullUrl string, params SetWebhookParamet
 
 // Pass True to drop all pending updates
 func (b *Bot) DeleteWebhook(dropPendingUpdates bool) (string, error) {
-	req, err := http.NewRequest(http.MethodGet, b.urlWithToken+deleteWebhookUrl, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", contentTypeJSON)
+	form := url.Values{}
+	form.Add("url", "")
 
 	if dropPendingUpdates {
-		params := url.Values{}
-		params.Add("drop_pending_updates", "True")
-		req.URL.RawQuery = params.Encode()
+		form.Add("drop_pending_updates", "True")
 	}
 
-	resp, err := b.api.DoRequest(req)
+	resp, err := http.PostForm(b.urlWithToken+setWebhookUrl, form)
 	if err != nil {
 		return "", fmt.Errorf("HTTP request failed: %w", err)
 	}
+	defer resp.Body.Close()
 
-	result, ok := resp.Result.(webhookResponse)
-	if !ok {
-		return "", fmt.Errorf("invalid webhook response type: %v", result)
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var result webhookResponse
+
+	if err := json.Unmarshal(responseBody, &result); err != nil {
+		return "", fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf(
+			"telegram API returned non-200 status: %d, description: %s",
+			resp.StatusCode, result.Description,
+		)
+	}
+
+	if !result.Ok {
+		return "", fmt.Errorf("telegram API error: %s", result.Description)
 	}
 
 	return result.Description, nil
