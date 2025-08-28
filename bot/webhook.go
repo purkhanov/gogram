@@ -16,15 +16,53 @@ import (
 )
 
 const (
-	setWebhookUrl    = "/setWebhook"
-	deleteWebhookUrl = "/deleteWebhook"
+	setWebhookUrl     = "/setWebhook"
+	deleteWebhookUrl  = "/deleteWebhook"
+	getWebhookInfoUrl = "/getWebhookInfo"
 )
 
-type webhookResponse struct {
+type webhookResponse[T webhookInfo | string | bool] struct {
 	Ok          bool   `json:"ok"`
 	ErrorCode   int    `json:"error_code"`
 	Description string `json:"description"`
-	Result      bool   `json:"result"`
+	Result      T      `json:"result"`
+}
+
+type webhookInfo struct {
+	// Webhook URL, may be empty if webhook is not set up
+	Url string `json:"url"`
+
+	// True, if a custom certificate was provided
+	// for webhook certificate checks
+	HasCustomCertificate bool `json:"has_custom_certificate"`
+
+	// Number of updates awaiting delivery
+	PendingUpdateCount int `json:"pending_update_count"`
+
+	// Optional. Currently used webhook IP address
+	IpAddress string `json:"ip_address,omitempty"`
+
+	// Optional. Unix time for the most recent error that
+	// happened when trying to deliver an update via webhook
+	LastErrorDate int `json:"last_error_date,omitempty"`
+
+	// Optional. Error message in human-readable format
+	// for the most recent error that happened when
+	// trying to deliver an update via webhook
+	LastErrorMessage string `json:"last_error_message,omitempty"`
+
+	// Optional. Unix time of the most recent error that
+	// happened when trying to synchronize available
+	// updates with Telegram datacenters
+	LastSynchronizationErrorDate int `json:"last_synchronization_error_date,omitempty"`
+
+	// Optional. The maximum allowed number of simultaneous HTTPS
+	// connections to the webhook for update delivery
+	MaxConnections int `json:"max_connections,omitempty"`
+
+	// Optional. A list of update types the bot is subscribed to.
+	// Defaults to all update types except chat_member
+	AllowedUpdates []string `json:"allowed_updates,omitempty"`
 }
 
 type SetWebhookParameters struct {
@@ -161,7 +199,7 @@ func (b *Bot) SetWebhook(params SetWebhookParameters) (string, error) {
 		)
 	}
 
-	var result webhookResponse
+	var result webhookResponse[bool]
 
 	if err := json.Unmarshal(responseBody, &result); err != nil {
 		return "", fmt.Errorf("failed to parse response: %w", err)
@@ -229,7 +267,7 @@ func (b *Bot) DeleteWebhook(dropPendingUpdates bool) (string, error) {
 		return "", fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	var result webhookResponse
+	var result webhookResponse[bool]
 
 	if err := json.Unmarshal(responseBody, &result); err != nil {
 		return "", fmt.Errorf("failed to parse response: %w", err)
@@ -247,4 +285,31 @@ func (b *Bot) DeleteWebhook(dropPendingUpdates bool) (string, error) {
 	}
 
 	return result.Description, nil
+}
+
+func (b *Bot) GetWebhookInfo() (webhookInfo, error) {
+	var webhookInfoRes webhookInfo
+
+	resp, err := http.Get(b.urlWithToken + getWebhookInfoUrl)
+	if err != nil {
+		return webhookInfoRes, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return webhookInfoRes, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var result webhookResponse[webhookInfo]
+
+	if err := json.Unmarshal(responseBody, &result); err != nil {
+		return webhookInfoRes, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return webhookInfoRes, fmt.Errorf("telegram API returned non-200 status: %d", resp.StatusCode)
+	}
+
+	return result.Result, nil
 }
