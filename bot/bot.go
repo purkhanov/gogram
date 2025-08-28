@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -12,8 +11,6 @@ const (
 	baseUrl         = "https://api.telegram.org"
 	contentTypeJSON = "application/json"
 )
-
-var errInvalidType = errors.New("invalid type")
 
 type Bot struct {
 	token        string
