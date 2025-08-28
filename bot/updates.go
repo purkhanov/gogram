@@ -98,5 +98,12 @@ func (b *Bot) GetUpdates(params GetUpdateParams) ([]types.Update, error) {
 		return nil, fmt.Errorf("failed to unmarshal result: %w", err)
 	}
 
+	if !result.Ok {
+		return nil, fmt.Errorf(
+			"telegram API returned not ok: error code: %d, description: %s",
+			result.ErrorCode, result.Description,
+		)
+	}
+
 	return result.Result, nil
 }
