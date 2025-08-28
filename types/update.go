@@ -31,7 +31,7 @@ type Update struct {
 
 	// Optional. The bot was connected to or disconnected from a business
 	// account, or a user edited an existing connection with the bot
-	BusinessConnection *any `json:"business_connection,omitempty"`
+	BusinessConnection *BusinessConnection `json:"business_connection,omitempty"`
 
 	// Optional. New message from a connected business account
 	BusinessMessage *Message `json:"business_conbusiness_messagenection,omitempty"`
@@ -109,5 +109,3 @@ type Update struct {
 	// be an administrator in the chat to receive these updates.
 	RemovedChatBoost *ChatBoostRemoved `json:"removed_chat_boost,omitempty"`
 }
-
-
