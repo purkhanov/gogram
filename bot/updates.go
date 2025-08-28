@@ -1,10 +1,10 @@
 package bot
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/purkhanov/gogram/types"
 )
@@ -62,29 +62,15 @@ func (b *Bot) GetUpdates(params GetUpdateParams) ([]types.Update, error) {
 		return nil, err
 	}
 
-	formData := url.Values{}
-	formData.Add("offset", fmt.Sprintf("%d", params.Offset))
-
-	if params.Limit != 0 {
-		formData.Add("limit", fmt.Sprintf("%d", params.Limit))
+	data, err := json.Marshal(params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal params: %v", err)
 	}
 
-	timeout := fmt.Sprintf("%d", params.Timeout)
-	if params.Timeout != 0 {
-		timeout = fmt.Sprintf("%d", params.Timeout)
-	}
-	formData.Add("timeout", timeout)
-
-	if len(params.AllowedUpdates) != 0 {
-		allowedUpdatesJSON, _ := json.Marshal(params.AllowedUpdates)
-		formData.Add("allowed_updates", string(allowedUpdatesJSON))
-	}
-
-	req, err := http.NewRequest(http.MethodGet, b.urlWithToken+getUpdatesUrl, nil)
+	req, err := http.NewRequest(http.MethodGet, b.urlWithToken+getUpdatesUrl, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %v", err)
 	}
-	req.URL.RawQuery = formData.Encode()
 	req.Header.Set("Content-Type", contentTypeJSON)
 
 	resp, err := b.api.DoRequest(req)
