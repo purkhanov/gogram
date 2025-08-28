@@ -92,7 +92,7 @@ func (b *Bot) GetUpdates(params GetUpdateParams) ([]types.Update, error) {
 		return nil, err
 	}
 
-	var result types.APIResponse[types.Update]
+	var result types.APIResponse[[]types.Update]
 
 	if err := json.Unmarshal(resp, &result); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal result: %w", err)
