@@ -1,12 +1,12 @@
 package types
 
 type ResponseType interface {
-	Update
+	[]Update | Message
 }
 
 type APIResponse[T ResponseType] struct {
 	Ok          bool               `json:"ok"`
-	Result      []T                `json:"result"`
+	Result      T                  `json:"result"`
 	Description string             `json:"description"`
 	ErrorCode   int                `json:"error_code"`
 	Parameters  responseParameters `json:"parameters"`
