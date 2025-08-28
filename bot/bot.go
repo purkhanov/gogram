@@ -3,10 +3,11 @@ package bot
 import (
 	"errors"
 	"fmt"
-	"gogram/api"
-	"gogram/types"
 	"net/http"
 	"net/url"
+
+	"github.com/purkhanov/gogram/api"
+	"github.com/purkhanov/gogram/types"
 )
 
 const (
