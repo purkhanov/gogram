@@ -84,6 +84,10 @@ type ReplyKeyboardRemove struct {
 	Selective bool `json:"selective,omitempty"`
 }
 
+func (r ReplyKeyboardRemove) ValidateReplyMarkup() error {
+	return nil
+}
+
 // This object represents one button of the reply keyboard.
 // At most one of the optional fields must be used to specify
 // type of the button. For simple text buttons, String can be
@@ -287,4 +291,8 @@ type ForceReply struct {
 	// message in the same chat and forum topic,
 	// sender of the original message.
 	Selective bool `json:"selective,omitempty"`
+}
+
+func (f ForceReply) ValidateReplyMarkup() error {
+	return nil
 }
