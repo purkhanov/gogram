@@ -14,8 +14,6 @@ const (
 	updatesTimeout = "3600"
 )
 
-// Use this method to receive incoming updates using long polling.
-// Returns an Array of Update objects.
 type GetUpdateParams struct {
 	// Identifier of the first update to be returned. Must be greater
 	// by one than the highest among the identifiers of previously
@@ -57,7 +55,9 @@ func (u *GetUpdateParams) validate() error {
 	return nil
 }
 
-func (b *Bot) GetUpdates(params GetUpdateParams) ([]types.Update, error) {
+// Use this method to receive incoming updates using long polling.
+// Returns an Array of Update objects.
+func (b *Bot) GetUpdates(params GetUpdateParams) ([]*types.Update, error) {
 	if err := params.validate(); err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (b *Bot) GetUpdates(params GetUpdateParams) ([]types.Update, error) {
 		return nil, err
 	}
 
-	var result types.APIResponse[[]types.Update]
+	var result types.APIResponse[[]*types.Update]
 
 	if err := json.Unmarshal(resp, &result); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal result: %w", err)
