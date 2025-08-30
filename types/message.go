@@ -8,7 +8,7 @@ type Message struct {
 	// sending it immediately. In such cases, this
 	// field will be 0 and the relevant message will
 	// be unusable until it is actually sent
-	MessageID int `json:"message_id"`
+	MessageID uint `json:"message_id"`
 
 	// Optional. Unique identifier of a message thread
 	// to which the message belongs; for supergroups only
