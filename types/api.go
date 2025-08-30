@@ -1,7 +1,7 @@
 package types
 
 type ResponseType interface {
-	[]*Update | Message
+	[]*Update | Message | bool
 }
 
 type APIResponse[T ResponseType] struct {
