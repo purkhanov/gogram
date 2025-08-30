@@ -7,7 +7,7 @@ type Chat struct {
 	// defects in interpreting it. But it has at most 52
 	// significant bits, so a signed 64-bit integer or
 	// double-precision float type are safe for storing this identifier.
-	ID int `json:"id"`
+	ID uint `json:"id"`
 
 	// Type of the chat, can be either “private”, “group”, “supergroup” or “channel”
 	Type string `json:"type"`
