@@ -71,7 +71,7 @@ func (b *Bot) deleteMsgs(data map[string]any, url string) error {
 		return fmt.Errorf("failed to marshal data: %w", err)
 	}
 
-	resp, err := b.api.DoRequestWithData(c, http.MethodPost, url, dataByte)
+	resp, err := b.api.DoRequestWithContextAndData(c, http.MethodPost, url, dataByte)
 	if err != nil {
 		return err
 	}
