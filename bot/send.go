@@ -25,7 +25,7 @@ type SendMessageParams struct {
 
 	// Unique identifier for the target chat or username of the
 	// target channel (in the format @channelusername)
-	ChatID uint `json:"chat_id"`
+	ChatID int `json:"chat_id"`
 
 	// Unique identifier for the target message thread (topic)
 	// of the forum; for forum supergroups only
