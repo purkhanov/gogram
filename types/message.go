@@ -362,7 +362,7 @@ type Message struct {
 
 type InaccessibleMessage struct {
 	// Chat the message belonged to
-	Chat Chat `json:"chat"`
+	Chat *Chat `json:"chat"`
 
 	// Unique message identifier inside the chat
 	MessageID int `json:"message_id"`
