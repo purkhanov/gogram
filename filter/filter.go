@@ -1,11 +1,36 @@
 package filters
 
-import "github.com/purkhanov/gogram/types"
+import (
+	"regexp"
+	"strings"
+
+	"github.com/purkhanov/gogram/commands"
+	"github.com/purkhanov/gogram/types"
+)
 
 type Filter func(*types.Message) bool
 
 func TextEquals(text string) Filter {
 	return func(m *types.Message) bool {
 		return m.Text == text
+	}
+}
+
+func TextContains(substring string) Filter {
+	return func(m *types.Message) bool {
+		return strings.Contains(m.Text, substring)
+	}
+}
+
+func TextMatches(pattern string) Filter {
+	return func(m *types.Message) bool {
+		matched, _ := regexp.MatchString(pattern, m.Text)
+		return matched
+	}
+}
+
+func IsCommand(command commands.Command) Filter {
+	return func(m *types.Message) bool {
+		return m.Text == string(command)
 	}
 }
