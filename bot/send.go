@@ -26,7 +26,7 @@ type SendMessageParams struct {
 
 	// Unique identifier for the target chat or username of the
 	// target channel (in the format @channelusername)
-	ChatID int `json:"chat_id"`
+	ChatID uint `json:"chat_id"`
 
 	// Unique identifier for the target message thread (topic)
 	// of the forum; for forum supergroups only
@@ -269,7 +269,7 @@ func (b *Bot) AnswerCallbackQuery(params AnswerCallbackQueryParam) error {
 
 	if !result.Ok {
 		return fmt.Errorf(
-			"telegram API returned not ok, error code: %d, description: %s",
+			"telegram API returned not ok, can not answer to callback query, error code: %d, description: %s",
 			result.ErrorCode, result.Description,
 		)
 	}
