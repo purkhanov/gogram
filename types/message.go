@@ -357,7 +357,7 @@ type Message struct {
 
 	// Optional. Inline keyboard attached to the message.
 	// login_url buttons are represented as ordinary url buttons.
-	ReplyMarkup *any `json:"reply_markup,omitempty"`
+	ReplyMarkup *InlineKeyboardMarkup `json:"reply_markup,omitempty"`
 }
 
 type InaccessibleMessage struct {
