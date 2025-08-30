@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/purkhanov/gogram/bot"
-	filters "github.com/purkhanov/gogram/filter"
 	"github.com/purkhanov/gogram/types"
 )
 
@@ -18,14 +17,15 @@ type dispatcher struct {
 
 	webhookServer *http.Server
 
-	Ctx      context.Context
-	cancel   context.CancelFunc
-	handlers []handler
+	Ctx    context.Context
+	cancel context.CancelFunc
+	// handlers handler
+	handlers handlers
 }
 
-type handler struct {
-	filters []filters.Filter
-	handler func(*types.Update) error
+type handlers struct {
+	messageHandler  []messageHandler
+	callbackHandler []callbackQueryHandler
 }
 
 func NewDispatcher(bot *bot.Bot) *dispatcher {
@@ -36,5 +36,30 @@ func NewDispatcher(bot *bot.Bot) *dispatcher {
 		updatesChan: make(chan *types.Update, bufferSize),
 		Ctx:         ctx,
 		cancel:      cancel,
+	}
+}
+
+func (d *dispatcher) processUpdates(updatesChan <-chan *types.Update) {
+	for {
+		select {
+		case <-d.Ctx.Done():
+			return
+
+		case update, ok := <-updatesChan:
+			if !ok {
+				return
+			}
+
+			go d.checkUpdate(update)
+		}
+	}
+}
+
+func (d *dispatcher) checkUpdate(update *types.Update) {
+	switch {
+	case update.Message != nil:
+		d.messageHandler(update.Message)
+	case update.CallbackQuery != nil:
+		d.callbackQueryHandler(update.CallbackQuery)
 	}
 }
