@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/purkhanov/gogram/bot"
-	"github.com/purkhanov/gogram/types"
 )
 
 const (
@@ -24,10 +23,8 @@ func (d *dispatcher) StartPolling(skipUpdates bool) error {
 		Timeout: timeout,
 	}
 
-	updatesChan := make(chan *types.Update, d.bufferSize)
-
 	go func() {
-		defer close(updatesChan)
+		defer close(d.updatesChan)
 
 		for {
 			select {
@@ -60,7 +57,7 @@ func (d *dispatcher) StartPolling(skipUpdates bool) error {
 				for _, update := range updates {
 					d.nextOffset = update.UpdateID + 1
 					select {
-					case updatesChan <- update:
+					case d.updatesChan <- update:
 					case <-d.Ctx.Done():
 						return
 					}
@@ -69,7 +66,7 @@ func (d *dispatcher) StartPolling(skipUpdates bool) error {
 		}
 	}()
 
-	go d.processUpdates(updatesChan)
+	go d.processUpdates(d.updatesChan)
 
 	return nil
 }
