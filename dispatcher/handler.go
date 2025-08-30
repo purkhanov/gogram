@@ -12,7 +12,7 @@ type messageHandlerFunc func(*types.Message) error
 
 func (d *dispatcher) CommandHandler(msgHandler messageHandlerFunc, command commands.Command) {
 	d.handlers = append(d.handlers, handler{
-		filters: []filters.Filter{filters.TextEquals(string(command))},
+		filters: []filters.Filter{filters.IsCommand(command)},
 		handler: func(u *types.Update) error {
 			if u.Message == nil {
 				return nil
