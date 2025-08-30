@@ -39,27 +39,22 @@ func (c *ApiClient) DoRequest(request *http.Request) ([]byte, error) {
 	return respBody, nil
 }
 
-func (c *ApiClient) DoRequestWithData(ctx context.Context, method, url string, data []byte) ([]byte, error) {
+func (c *ApiClient) DoRequestWithData(method, url string, data []byte) ([]byte, error) {
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(data))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Add("Content-Type", contentTypeJSON)
+
+	return c.DoRequest(req)
+}
+
+func (c *ApiClient) DoRequestWithContextAndData(ctx context.Context, method, url string, data []byte) ([]byte, error) {
 	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 	req.Header.Add("Content-Type", contentTypeJSON)
 
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("HTTP request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error status code: %s, Body: %s", resp.Status, string(respBody))
-	}
-
-	return respBody, nil
+	return c.DoRequest(req)
 }
