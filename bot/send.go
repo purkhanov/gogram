@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	sendMessageUrl = "/sendMessage"
-	sendAudioUrl   = "/sendAudio"
+	sendMessageUrl      = "/sendMessage"
+	sendAudioUrl        = "/sendAudio"
+	answerCallbackQuery = "/answerCallbackQuery"
 )
 
 type ReplyMarkup interface {
@@ -216,4 +217,62 @@ func (b *Bot) SendAudio(params SendVoiceParameters) (types.Message, error) {
 	var response types.APIResponse[types.Message]
 
 	return response.Result, nil
+}
+
+type AnswerCallbackQueryParam struct {
+	// Required. Unique identifier for the query to be answered
+	CallbackQueryID string `json:"callback_query_id"`
+
+	// Optional. Text of the notification. If not specified, nothing
+	// will be shown to the user, 0-200 characters
+	Text string `json:"text,omitempty"`
+
+	// Optional. If True, an alert will be shown by the client
+	// instead of a notification at the top of the
+	// chat screen. Defaults to false.
+	ShowAlert bool `json:"show_alert,omitempty"`
+
+	// Optional. URL that will be opened by the user's client. If you have
+	// created a Game and accepted the conditions via @BotFather,
+	// specify the URL that opens your game - note that this will
+	// only work if the query comes from a callback_game button.
+	Url string `json:"url,omitempty"`
+
+	// Optional. The maximum amount of time in seconds that the result of the
+	// callback query may be cached client-side. Telegram apps will
+	// support caching starting in version 3.14. Defaults to 0.
+	CacheTime uint `json:"cache_time,omitempty"`
+}
+
+func (b *Bot) AnswerCallbackQuery(params AnswerCallbackQueryParam) error {
+	data, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, b.urlWithToken+answerCallbackQuery, bytes.NewBuffer(data))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", contentTypeJSON)
+
+	resp, err := b.api.DoRequest(req)
+	if err != nil {
+		return err
+	}
+
+	var result types.APIResponse[bool]
+
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return fmt.Errorf("failed to unmarshal result: %w", err)
+	}
+
+	if !result.Ok {
+		return fmt.Errorf(
+			"telegram API returned not ok, error code: %d, description: %s",
+			result.ErrorCode, result.Description,
+		)
+	}
+
+	return nil
 }
