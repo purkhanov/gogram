@@ -1,10 +1,5 @@
 package types
 
-import (
-	"errors"
-	"time"
-)
-
 type Message struct {
 	// Unique message identifier inside this chat.
 	// In specific instances (e.g., message containing
@@ -363,31 +358,6 @@ type Message struct {
 	// Optional. Inline keyboard attached to the message.
 	// login_url buttons are represented as ordinary url buttons.
 	ReplyMarkup *any `json:"reply_markup,omitempty"`
-}
-
-func (m *Message) Answer(text string) error {
-	if m.Chat == nil {
-		return errors.New("message chat is nil")
-	}
-
-	// TODO: Implement the logic to send a message to the chat.
-
-	return nil
-}
-
-func (m *Message) Reply(text string) error {
-	if m.Chat == nil {
-		return errors.New("message chat is nil")
-	}
-
-	// TODO: Implement the logic to reply to the message.
-
-	return nil
-}
-
-// Time converts the message timestamp into a Time.
-func (m *Message) Time() time.Time {
-	return time.Unix(int64(m.Date), 0)
 }
 
 type InaccessibleMessage struct {
