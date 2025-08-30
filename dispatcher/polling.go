@@ -36,30 +36,16 @@ func (d *dispatcher) StartPolling(skipUpdates bool) error {
 				updates, err := d.Bot.GetUpdates(params)
 				if err != nil {
 					log.Printf("error fetching updates: %v", err)
-
-					select {
-					case <-d.Ctx.Done():
-						return
-					case <-time.After(sleepTime):
-					}
-					continue
-				}
-
-				if len(updates) == 0 {
-					select {
-					case <-d.Ctx.Done():
-						return
-					case <-time.After(100 * time.Millisecond):
-					}
 					continue
 				}
 
 				for _, update := range updates {
 					d.nextOffset = update.UpdateID + 1
 					select {
-					case d.updatesChan <- update:
 					case <-d.Ctx.Done():
 						return
+					default:
+						d.updatesChan <- update
 					}
 				}
 			}
