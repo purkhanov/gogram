@@ -53,6 +53,7 @@ type ShippingOption struct {
 	Prices []LabeledPrice `json:"prices"` // List of price portions
 }
 
+// This object represents a portion of the price for goods or services.
 type LabeledPrice struct {
 	Label string `json:"label"` // Portion label
 
