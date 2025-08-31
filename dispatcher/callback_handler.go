@@ -1,13 +1,11 @@
 package dispatcher
 
 import (
-	"log"
-
 	filters "github.com/purkhanov/gogram/filter"
 	"github.com/purkhanov/gogram/types"
 )
 
-type callbackQueryHandlerFunc func(*types.CallbackQuery) error
+type callbackQueryHandlerFunc func(*types.CallbackQuery)
 
 type callbackQueryHandler struct {
 	filters []filters.CallbackFilter
@@ -36,8 +34,6 @@ func (d *dispatcher) callbackQueryHandler(callback *types.CallbackQuery) {
 			continue
 		}
 
-		if err := cbHandler.handler(callback); err != nil {
-			log.Printf("error handling update: %v", err)
-		}
+		cbHandler.handler(callback)
 	}
 }

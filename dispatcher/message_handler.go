@@ -1,14 +1,12 @@
 package dispatcher
 
 import (
-	"log"
-
 	"github.com/purkhanov/gogram/commands"
 	filters "github.com/purkhanov/gogram/filter"
 	"github.com/purkhanov/gogram/types"
 )
 
-type messageHandlerFunc func(*types.Message) error
+type messageHandlerFunc func(*types.Message)
 
 type messageHandler struct {
 	filters []filters.MessageFilter
@@ -44,8 +42,6 @@ func (d *dispatcher) messageHandler(msg *types.Message) {
 			continue
 		}
 
-		if err := msgHandler.handler(msg); err != nil {
-			log.Printf("error handling update: %v", err)
-		}
+		msgHandler.handler(msg)
 	}
 }
