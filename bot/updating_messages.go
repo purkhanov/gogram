@@ -63,7 +63,7 @@ func (b *Bot) DeleteMessages(chatID uint, messageIDs []uint) error {
 }
 
 func (b *Bot) deleteMsgs(data map[string]any, url string) error {
-	c, cancel := context.WithTimeout(b.ctx, httpRequestTimeout)
+	c, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
 	defer cancel()
 
 	dataByte, err := json.Marshal(data)

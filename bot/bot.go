@@ -19,7 +19,7 @@ type Bot struct {
 	token        string
 	urlWithToken string
 	api          *api.ApiClient
-	ctx          context.Context
+	Ctx          context.Context
 }
 
 func NewBot(token string) *Bot {
@@ -29,6 +29,6 @@ func NewBot(token string) *Bot {
 		token:        token,
 		urlWithToken: fmt.Sprintf("%s/bot%s", baseUrl, token),
 		api:          api.NewClient(&http.Client{}),
-		ctx:          ctx,
+		Ctx:          ctx,
 	}
 }
