@@ -24,8 +24,9 @@ type dispatcher struct {
 }
 
 type handlers struct {
-	messageHandler  []messageHandler
-	callbackHandler []callbackQueryHandler
+	messageHandler          []messageHandler
+	callbackHandler         []callbackQueryHandler
+	preCheckoutQueryHandler preCheckoutQueryHandlerFunc
 }
 
 func NewDispatcher(bot *bot.Bot) *dispatcher {
@@ -61,5 +62,7 @@ func (d *dispatcher) checkUpdate(update *types.Update) {
 		d.messageHandler(update.Message)
 	case update.CallbackQuery != nil:
 		d.callbackQueryHandler(update.CallbackQuery)
+	case update.PreCheckoutQuery != nil:
+		d.preCheckoutQueryHandler(update.PreCheckoutQuery)
 	}
 }
