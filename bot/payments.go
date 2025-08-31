@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	sendInvoiceUrl = "/sendInvoice"
+	sendInvoiceUrl            = "/sendInvoice"
+	answerPreCheckoutQueryUrl = "/answerPreCheckoutQuery"
 )
 
 type SendInvoiceParam struct {
@@ -174,6 +175,57 @@ func (b *Bot) SendInvoice(param SendInvoiceParam) error {
 	}
 
 	var result types.APIResponse[types.Message]
+
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return err
+	}
+
+	if !result.Ok {
+		return fmt.Errorf("telegram API error: code %d - %s", result.ErrorCode, result.Description)
+	}
+
+	return nil
+}
+
+type AnswerPreCheckoutQueryParams struct {
+	// Unique identifier for the query to be answered
+	PreCheckoutQueryID string `json:"pre_checkout_query_id" validate:"required"`
+
+	// Specify True if everything is alright (goods are
+	// available, etc.) and the bot is ready to proceed
+	// with the order. Use False if there are any problems.
+	Ok bool `json:"ok"`
+
+	// Required if ok is False. Error message in human readable
+	// form that explains the reason for failure to proceed with
+	// the checkout (e.g. "Sorry, somebody just bought the last
+	// of our amazing black T-shirts while you were busy filling
+	// out your payment details. Please choose a different color
+	// or garment!"). Telegram will display this message to the user.
+	ErrorMessage string `json:"error_message,omitempty"`
+}
+
+func (b *Bot) AnswerPreCheckoutQuery(params AnswerPreCheckoutQueryParams) error {
+	if err := utils.ValidateStruct(params); err != nil {
+		return err
+	}
+
+	data, err := json.Marshal(params)
+	if err != nil {
+		return err
+	}
+
+	c, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
+	defer cancel()
+
+	resp, err := b.api.DoRequestWithContextAndData(
+		c, http.MethodPost, b.urlWithToken+answerPreCheckoutQueryUrl, data,
+	)
+	if err != nil {
+		return err
+	}
+
+	var result types.APIResponse[bool]
 
 	if err := json.Unmarshal(resp, &result); err != nil {
 		return err
