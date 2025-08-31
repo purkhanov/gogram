@@ -2,11 +2,13 @@ package bot
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/purkhanov/gogram/types"
+	"github.com/purkhanov/gogram/utils"
 )
 
 const (
@@ -26,7 +28,7 @@ type SendMessageParams struct {
 
 	// Unique identifier for the target chat or username of the
 	// target channel (in the format @channelusername)
-	ChatID uint `json:"chat_id"`
+	ChatID uint `json:"chat_id" validate:"required"`
 
 	// Unique identifier for the target message thread (topic)
 	// of the forum; for forum supergroups only
@@ -39,7 +41,7 @@ type SendMessageParams struct {
 
 	// Text of the message to be sent, 1-4096
 	// characters after entities parsing
-	Text string `json:"text"`
+	Text string `json:"text" validate:"required"`
 
 	// Mode for parsing entities in the message text.
 	// See formatting options for more details.
@@ -83,57 +85,39 @@ type SendMessageParams struct {
 	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
 }
 
-func (sm *SendMessageParams) validate() error {
-	if sm.ChatID == 0 {
-		return fmt.Errorf("chat id is required")
-	}
-
-	if sm.Text == "" {
-		return fmt.Errorf("text is required")
-	}
-
-	if sm.ReplyMarkup != nil {
-		err := sm.ReplyMarkup.ValidateReplyMarkup()
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 // Use this method to send text messages.
 // On success, the sent Message is returned.
-func (b *Bot) SendMessage(params SendMessageParams) (types.Message, error) {
-	var response types.APIResponse[types.Message]
-
-	if err := params.validate(); err != nil {
-		return response.Result, err
+func (b *Bot) SendMessage(params SendMessageParams) error {
+	if err := utils.ValidateStruct(params); err != nil {
+		return err
 	}
 
 	data, err := json.Marshal(params)
 	if err != nil {
-		return response.Result, fmt.Errorf("failed to marshal params: %w", err)
+		return fmt.Errorf("failed to marshal params: %w", err)
 	}
 
-	req, err := http.NewRequest(
-		http.MethodPost, b.urlWithToken+sendMessageUrl, bytes.NewBuffer(data),
+	c, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
+	defer cancel()
+
+	resp, err := b.api.DoRequestWithContextAndData(
+		c, http.MethodPost, b.urlWithToken+sendMessageUrl, data,
 	)
 	if err != nil {
-		return response.Result, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", contentTypeJSON)
-
-	resp, err := b.api.DoRequest(req)
-	if err != nil {
-		return response.Result, fmt.Errorf("failed to send request: %w", err)
+		return err
 	}
 
-	if err := json.Unmarshal(resp, &response); err != nil {
-		return response.Result, fmt.Errorf("failed to unmarshal response: %w", err)
+	var result types.APIResponse[types.Message]
+
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
-	return response.Result, nil
+	if !result.Ok {
+		return fmt.Errorf("telegram API error: code %d - %s", result.ErrorCode, result.Description)
+	}
+
+	return nil
 }
 
 type SendVoiceParameters struct {
