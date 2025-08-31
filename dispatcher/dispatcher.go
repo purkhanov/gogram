@@ -63,6 +63,6 @@ func (d *dispatcher) checkUpdate(update *types.Update) {
 	case update.CallbackQuery != nil:
 		d.callbackQueryHandler(update.CallbackQuery)
 	case update.PreCheckoutQuery != nil:
-		d.preCheckoutQueryHandler(update.PreCheckoutQuery)
+		d.callPreCheckoutQueryHandler(update.PreCheckoutQuery)
 	}
 }
