@@ -11,6 +11,7 @@ type ShippingQuery struct {
 	ShippingAddress string `json:"shipping_address"`
 }
 
+// This object contains information about an incoming pre-checkout query.
 type PreCheckoutQuery struct {
 	ID   string `json:"id"`   // Unique query identifier
 	From User   `json:"from"` // User who sent the query
