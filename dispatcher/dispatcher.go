@@ -19,7 +19,7 @@ type dispatcher struct {
 
 	Ctx    context.Context
 	cancel context.CancelFunc
-	
+
 	handlers handlers
 }
 
@@ -29,7 +29,7 @@ type handlers struct {
 }
 
 func NewDispatcher(bot *bot.Bot) *dispatcher {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(bot.Ctx)
 
 	return &dispatcher{
 		Bot:         bot,
