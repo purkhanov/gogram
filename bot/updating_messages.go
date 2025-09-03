@@ -83,7 +83,10 @@ func (b *Bot) deleteMsgs(data map[string]any, url string) error {
 	}
 
 	if !result.Ok {
-		return fmt.Errorf("telegram API error: code %d - %s", result.ErrorCode, result.Description)
+		return fmt.Errorf(
+			"telegram API error: code %d - %s",
+			result.ErrorCode, result.Description,
+		)
 	}
 
 	return nil

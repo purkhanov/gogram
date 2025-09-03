@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,7 +13,7 @@ const (
 	updatesTimeout = "3600"
 )
 
-type GetUpdateParams struct {
+type GetUpdatesOptions struct {
 	// Identifier of the first update to be returned. Must be greater
 	// by one than the highest among the identifiers of previously
 	// received updates. By default, updates starting with the earliest
@@ -47,19 +46,11 @@ type GetUpdateParams struct {
 	AllowedUpdates []string `json:"allowed_updates,omitempty"`
 }
 
-func (u *GetUpdateParams) validate() error {
-	if u.Limit != 0 && u.Limit > 100 {
-		return fmt.Errorf("limit must be between 1 and 100")
-	}
-
-	return nil
-}
-
 // Use this method to receive incoming updates using long polling.
 // Returns an Array of Update objects.
-func (b *Bot) GetUpdates(params GetUpdateParams) ([]*types.Update, error) {
-	if err := params.validate(); err != nil {
-		return nil, err
+func (b *Bot) GetUpdates(params GetUpdatesOptions) ([]*types.Update, error) {
+	if params.Limit != 0 && params.Limit > 100 {
+		return nil, fmt.Errorf("limit must be between 1 and 100")
 	}
 
 	data, err := json.Marshal(params)
@@ -67,13 +58,7 @@ func (b *Bot) GetUpdates(params GetUpdateParams) ([]*types.Update, error) {
 		return nil, fmt.Errorf("failed to marshal params: %v", err)
 	}
 
-	req, err := http.NewRequest(http.MethodGet, b.urlWithToken+getUpdatesUrl, bytes.NewBuffer(data))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %v", err)
-	}
-	req.Header.Set("Content-Type", contentTypeJSON)
-
-	resp, err := b.api.DoRequest(req)
+	resp, err := b.api.DoRequestWithData(http.MethodPost, b.urlWithToken+getUpdatesUrl, data)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +71,7 @@ func (b *Bot) GetUpdates(params GetUpdateParams) ([]*types.Update, error) {
 
 	if !result.Ok {
 		return nil, fmt.Errorf(
-			"telegram API returned not ok: error code: %d, description: %s",
+			"telegram API error: code %d - %s",
 			result.ErrorCode, result.Description,
 		)
 	}

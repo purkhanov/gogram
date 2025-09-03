@@ -13,25 +13,22 @@ type messageHandler struct {
 	handler messageHandlerFunc
 }
 
-func (d *dispatcher) CommandHandler(msgHandler messageHandlerFunc, command commands.Command) {
-	d.handlers.messageHandler = append(d.handlers.messageHandler, messageHandler{
-		filters: []filters.MessageFilter{filters.IsCommand(command)},
-		handler: msgHandler,
-	})
+func (d *dispatcher) OnCommand(command commands.Command, handler messageHandlerFunc) {
+	d.OnMessage(handler, filters.IsCommand(command))
 }
 
-func (d *dispatcher) MessageHandler(msgHandler messageHandlerFunc, filters ...filters.MessageFilter) {
-	d.handlers.messageHandler = append(d.handlers.messageHandler, messageHandler{
+func (d *dispatcher) OnMessage(handler messageHandlerFunc, filters ...filters.MessageFilter) {
+	d.handlers.messages = append(d.handlers.messages, messageHandler{
 		filters: filters,
-		handler: msgHandler,
+		handler: handler,
 	})
 }
 
-func (d *dispatcher) messageHandler(msg *types.Message) {
-	for _, msgHandler := range d.handlers.messageHandler {
+func (d *dispatcher) handleMessage(msg *types.Message) {
+	for _, message := range d.handlers.messages {
 		matches := true
 
-		for _, filter := range msgHandler.filters {
+		for _, filter := range message.filters {
 			if !filter(msg) {
 				matches = false
 				break
@@ -42,6 +39,6 @@ func (d *dispatcher) messageHandler(msg *types.Message) {
 			continue
 		}
 
-		msgHandler.handler(msg)
+		message.handler(msg)
 	}
 }

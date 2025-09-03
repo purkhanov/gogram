@@ -19,7 +19,7 @@ func (d *dispatcher) StartPolling(skipUpdates bool) error {
 
 	log.Println("starting polling for updates...")
 
-	params := bot.GetUpdateParams{
+	params := bot.GetUpdatesOptions{
 		Timeout: timeout,
 	}
 

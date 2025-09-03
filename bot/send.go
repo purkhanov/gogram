@@ -1,7 +1,6 @@
 package bot
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -21,7 +20,7 @@ type ReplyMarkup interface {
 	ValidateReplyMarkup() error
 }
 
-type SendMessageParams struct {
+type SendMessageOptions struct {
 	// Unique identifier of the business connection on
 	// behalf of which the message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
@@ -87,7 +86,7 @@ type SendMessageParams struct {
 
 // Use this method to send text messages.
 // On success, the sent Message is returned.
-func (b *Bot) SendMessage(params SendMessageParams) error {
+func (b *Bot) SendMessage(params SendMessageOptions) error {
 	if err := utils.ValidateStruct(params); err != nil {
 		return err
 	}
@@ -114,13 +113,15 @@ func (b *Bot) SendMessage(params SendMessageParams) error {
 	}
 
 	if !result.Ok {
-		return fmt.Errorf("telegram API error: code %d - %s", result.ErrorCode, result.Description)
+		return fmt.Errorf(
+			"telegram API error: code %d - %s", result.ErrorCode, result.Description,
+		)
 	}
 
 	return nil
 }
 
-type SendVoiceParameters struct {
+type SendVoiceOptions struct {
 	// Unique identifier of the business connection on
 	// behalf of which the message will be sent
 	BusinessConnectionID string `json:"business_connection_id,omitempty"`
@@ -197,50 +198,53 @@ type SendVoiceParameters struct {
 // be in the .MP3 or .M4A format. On success, the sent Message is
 // returned. Bots can currently send audio files of up to 50 MB in
 // size, this limit may be changed in the future.
-func (b *Bot) SendAudio(params SendVoiceParameters) (types.Message, error) {
+func (b *Bot) SendAudio(params SendVoiceOptions) (types.Message, error) {
 	var response types.APIResponse[types.Message]
 
 	return response.Result, nil
 }
 
-type AnswerCallbackQueryParam struct {
-	// Required. Unique identifier for the query to be answered
-	CallbackQueryID string `json:"callback_query_id"`
+type AnswerCallbackQueryOptions struct {
+	// Unique identifier for the query to be answered
+	CallbackQueryID string `json:"callback_query_id" validate:"required"`
 
-	// Optional. Text of the notification. If not specified, nothing
+	// Text of the notification. If not specified, nothing
 	// will be shown to the user, 0-200 characters
 	Text string `json:"text,omitempty"`
 
-	// Optional. If True, an alert will be shown by the client
+	// If True, an alert will be shown by the client
 	// instead of a notification at the top of the
 	// chat screen. Defaults to false.
 	ShowAlert bool `json:"show_alert,omitempty"`
 
-	// Optional. URL that will be opened by the user's client. If you have
+	// URL that will be opened by the user's client. If you have
 	// created a Game and accepted the conditions via @BotFather,
 	// specify the URL that opens your game - note that this will
 	// only work if the query comes from a callback_game button.
 	Url string `json:"url,omitempty"`
 
-	// Optional. The maximum amount of time in seconds that the result of the
+	// The maximum amount of time in seconds that the result of the
 	// callback query may be cached client-side. Telegram apps will
 	// support caching starting in version 3.14. Defaults to 0.
 	CacheTime uint `json:"cache_time,omitempty"`
 }
 
-func (b *Bot) AnswerCallbackQuery(params AnswerCallbackQueryParam) error {
+func (b *Bot) AnswerCallbackQuery(params AnswerCallbackQueryOptions) error {
+	if err := utils.ValidateStruct(params); err != nil {
+		return err
+	}
+
 	data, err := json.Marshal(params)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, b.urlWithToken+answerCallbackQuery, bytes.NewBuffer(data))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", contentTypeJSON)
+	c, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
+	defer cancel()
 
-	resp, err := b.api.DoRequest(req)
+	resp, err := b.api.DoRequestWithContextAndData(
+		c, http.MethodPost, b.urlWithToken+answerCallbackQuery, data,
+	)
 	if err != nil {
 		return err
 	}
@@ -253,7 +257,7 @@ func (b *Bot) AnswerCallbackQuery(params AnswerCallbackQueryParam) error {
 
 	if !result.Ok {
 		return fmt.Errorf(
-			"telegram API returned not ok, can not answer to callback query, error code: %d, description: %s",
+			"telegram API error: code %d - %s",
 			result.ErrorCode, result.Description,
 		)
 	}

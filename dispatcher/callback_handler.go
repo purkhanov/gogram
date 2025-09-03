@@ -12,28 +12,29 @@ type callbackQueryHandler struct {
 	handler callbackQueryHandlerFunc
 }
 
-func (d *dispatcher) CallbackQueryHandler(cbHandler callbackQueryHandlerFunc, filters ...filters.CallbackFilter) {
-	d.handlers.callbackHandler = append(d.handlers.callbackHandler, callbackQueryHandler{
+func (d *dispatcher) OnCallbackQuery(handler callbackQueryHandlerFunc, filters ...filters.CallbackFilter) {
+	d.handlers.callbacks = append(d.handlers.callbacks, callbackQueryHandler{
 		filters: filters,
-		handler: cbHandler,
+		handler: handler,
 	})
 }
 
-func (d *dispatcher) callbackQueryHandler(callback *types.CallbackQuery) {
-	for _, cbHandler := range d.handlers.callbackHandler {
-		matches := true
-
-		for _, filter := range cbHandler.filters {
-			if !filter(callback) {
-				matches = false
-				break
-			}
-		}
-
-		if !matches {
+func (d *dispatcher) handleCallbackQuery(callbackQuery *types.CallbackQuery) {
+	for _, handler := range d.handlers.callbacks {
+		if !matchesFilters(handler.filters, callbackQuery) {
 			continue
 		}
 
-		cbHandler.handler(callback)
+		handler.handler(callbackQuery)
 	}
+}
+
+func matchesFilters(filters []filters.CallbackFilter, callbackQuery *types.CallbackQuery) bool {
+	for _, filter := range filters {
+		if !filter(callbackQuery) {
+			return false
+		}
+	}
+
+	return true
 }

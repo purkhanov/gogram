@@ -25,10 +25,10 @@ type dispatcher struct {
 }
 
 type handlers struct {
-	messageHandler          []messageHandler
-	callbackHandler         []callbackQueryHandler
-	preCheckoutQueryHandler preCheckoutQueryHandlerFunc
-	shippingQuery           shippingQueryHandlerFunc
+	messages         []messageHandler
+	callbacks        []callbackQueryHandler
+	preCheckoutQuery preCheckoutQueryHandlerFunc
+	shippingQuery    shippingQueryHandlerFunc
 }
 
 func NewDispatcher(bot *bot.Bot) *dispatcher {
@@ -61,13 +61,17 @@ func (d *dispatcher) processUpdates(updatesChan <-chan *types.Update) {
 func (d *dispatcher) checkUpdate(update *types.Update) {
 	switch {
 	case update.Message != nil:
-		d.messageHandler(update.Message)
+		d.handleMessage(update.Message)
+
 	case update.CallbackQuery != nil:
-		d.callbackQueryHandler(update.CallbackQuery)
+		d.handleCallbackQuery(update.CallbackQuery)
+
 	case update.PreCheckoutQuery != nil:
-		d.callPreCheckoutQueryHandler(update.PreCheckoutQuery)
+		d.handlePreCheckoutQuery(update.PreCheckoutQuery)
+
 	case update.ShippingQuery != nil:
 		d.handleShippingQuery(update.ShippingQuery)
+
 	default:
 		log.Println("unknown update type", update)
 	}
