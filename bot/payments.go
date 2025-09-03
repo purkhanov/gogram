@@ -189,7 +189,7 @@ func (b *Bot) SendInvoice(param SendInvoiceOptions) error {
 	return nil
 }
 
-type AnswerPreCheckoutQueryParams struct {
+type AnswerPreCheckoutQueryOptions struct {
 	// Unique identifier for the query to be answered
 	PreCheckoutQueryID string `json:"pre_checkout_query_id" validate:"required"`
 
@@ -207,7 +207,7 @@ type AnswerPreCheckoutQueryParams struct {
 	ErrorMessage string `json:"error_message,omitempty"`
 }
 
-func (b *Bot) AnswerPreCheckoutQuery(params AnswerPreCheckoutQueryParams) error {
+func (b *Bot) AnswerPreCheckoutQuery(params AnswerPreCheckoutQueryOptions) error {
 	if err := utils.ValidateStruct(params); err != nil {
 		return err
 	}
