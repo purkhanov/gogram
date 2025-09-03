@@ -2,6 +2,7 @@ package dispatcher
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"github.com/purkhanov/gogram/bot"
@@ -27,6 +28,7 @@ type handlers struct {
 	messageHandler          []messageHandler
 	callbackHandler         []callbackQueryHandler
 	preCheckoutQueryHandler preCheckoutQueryHandlerFunc
+	shippingQuery           shippingQueryHandlerFunc
 }
 
 func NewDispatcher(bot *bot.Bot) *dispatcher {
@@ -64,5 +66,9 @@ func (d *dispatcher) checkUpdate(update *types.Update) {
 		d.callbackQueryHandler(update.CallbackQuery)
 	case update.PreCheckoutQuery != nil:
 		d.callPreCheckoutQueryHandler(update.PreCheckoutQuery)
+	case update.ShippingQuery != nil:
+		d.handleShippingQuery(update.ShippingQuery)
+	default:
+		log.Println("unknown update type", update)
 	}
 }
