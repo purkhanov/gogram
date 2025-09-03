@@ -8,7 +8,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/purkhanov/gogram/bot"
@@ -87,10 +86,8 @@ func (d *dispatcher) ShutdownWebhookServer() {
 	d.cancel()
 }
 
-func extractAddrFromURL(urlStr string) string {
-	u, err := url.Parse(urlStr)
-	if err != nil {
-		return ""
+func (d *dispatcher) SetupWebhook(params bot.SetWebhookParameters) {
+	if _, err := d.Bot.SetWebhook(params); err != nil {
+		log.Println(err)
 	}
-	return u.Host
 }

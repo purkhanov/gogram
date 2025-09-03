@@ -15,7 +15,7 @@ const (
 	answerPreCheckoutQueryUrl = "/answerPreCheckoutQuery"
 )
 
-type SendInvoiceParam struct {
+type SendInvoiceOptions struct {
 	// Unique identifier for the target chat or username
 	// of the target channel (in the format @channelusername)
 	ChatID uint `json:"chat_id" validate:"required"`
@@ -153,7 +153,7 @@ type SendInvoiceParam struct {
 
 // Use this method to send invoices. On success,
 // the sent Message is returned.
-func (b *Bot) SendInvoice(param SendInvoiceParam) error {
+func (b *Bot) SendInvoice(param SendInvoiceOptions) error {
 	if err := utils.ValidateStruct(param); err != nil {
 		return err
 	}
