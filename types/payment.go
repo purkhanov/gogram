@@ -1,20 +1,43 @@
 package types
 
+// This object contains information about an incoming shipping query.
 type ShippingQuery struct {
-	ID   string `json:"id"`   // Unique query identifier
-	From User   `json:"from"` // User who sent the query
+	// Unique query identifier
+	ID string `json:"id"`
+
+	// User who sent the query
+	From *User `json:"from"`
 
 	// Bot-specified invoice payload
 	InvoicePayload string `json:"invoice_payload"`
 
 	// User specified shipping address
-	ShippingAddress string `json:"shipping_address"`
+	ShippingAddress *ShippingAddress `json:"shipping_address"`
+}
+
+type ShippingAddress struct {
+	// Two-letter ISO 3166-1 alpha-2 country code
+	CountryCode string `json:"country_code"`
+	State       string `json:"state"`
+	City        string `json:"city"`
+	StreetLine1 string `json:"street_line1"`
+	StreetLine2 string `json:"street_line2"`
+	PostCode    string `json:"post_code"`
+}
+
+type ShippingOption struct {
+	ID     string         `json:"id"`
+	Title  string         `json:"title"`
+	Prices []LabeledPrice `json:"prices"`
 }
 
 // This object contains information about an incoming pre-checkout query.
 type PreCheckoutQuery struct {
-	ID   string `json:"id"`   // Unique query identifier
-	From User   `json:"from"` // User who sent the query
+	// Unique query identifier
+	ID string `json:"id"`
+
+	// User who sent the query
+	From *User `json:"from"`
 
 	// Three-letter ISO 4217 currency code, or “XTR” for
 	// payments in Telegram Stars
@@ -37,26 +60,9 @@ type PreCheckoutQuery struct {
 	OrderInfo *OrderInfo `json:"order_info,omitempty"`
 }
 
-type ShippingAddress struct {
-	// Two-letter ISO 3166-1 alpha-2 country code
-	CountryCode string `json:"country_code"`
-
-	State       string `json:"state"`        // State, if applicable
-	City        string `json:"city"`         // City
-	StreetLine1 string `json:"street_line1"` // First line for the address
-	StreetLine2 string `json:"street_line2"` // Second line for the address
-	PostCode    string `json:"post_code"`    // Address post code
-}
-
-type ShippingOption struct {
-	ID     string         `json:"id"`     // Shipping option identifier
-	Title  string         `json:"title"`  // Option title
-	Prices []LabeledPrice `json:"prices"` // List of price portions
-}
-
 // This object represents a portion of the price for goods or services.
 type LabeledPrice struct {
-	Label string `json:"label"` // Portion label
+	Label string `json:"label"`
 
 	// Price of the product in the smallest units of the currency
 	// (integer, not float/double). For example, for a price of
@@ -67,13 +73,16 @@ type LabeledPrice struct {
 }
 
 type OrderInfo struct {
-	Name            string           `json:"name,omitempty"`             // Optional. User name
-	PhoneNumber     string           `json:"phone_number,omitempty"`     // Optional. User's phone number
-	Email           string           `json:"email,omitempty"`            // Optional. User email
-	ShippingAddress *ShippingAddress `json:"shipping_address,omitempty"` // Optional. Optional. User shipping address
+	Name            string           `json:"name,omitempty"`
+	PhoneNumber     string           `json:"phone_number,omitempty"`
+	Email           string           `json:"email,omitempty"`
+	ShippingAddress *ShippingAddress `json:"shipping_address,omitempty"`
 }
 
 type PaidMediaPurchased struct {
-	From             User   `json:"from"`               // User who purchased the media
-	PaidMediaPayload string `json:"paid_media_payload"` // Bot-specified paid media payload
+	// User who purchased the media
+	From User `json:"from"`
+
+	// Bot-specified paid media payload
+	PaidMediaPayload string `json:"paid_media_payload"`
 }
