@@ -256,7 +256,7 @@ func (b *Bot) DeleteWebhook(dropPendingUpdates bool) (string, error) {
 		form.Add("drop_pending_updates", "True")
 	}
 
-	resp, err := http.PostForm(b.urlWithToken+setWebhookUrl, form)
+	resp, err := http.PostForm(b.urlWithToken+deleteWebhookUrl, form)
 	if err != nil {
 		return "", fmt.Errorf("HTTP request failed: %w", err)
 	}
