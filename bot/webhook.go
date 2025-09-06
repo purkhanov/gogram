@@ -2,17 +2,19 @@ package bot
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
-	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
+	"strings"
+
+	"github.com/purkhanov/gogram/types"
+	"github.com/purkhanov/gogram/utils"
 )
 
 const (
@@ -21,12 +23,12 @@ const (
 	getWebhookInfoUrl = "/getWebhookInfo"
 )
 
-type webhookResponse[T webhookInfo | string | bool] struct {
-	Ok          bool   `json:"ok"`
-	ErrorCode   int    `json:"error_code"`
-	Description string `json:"description"`
-	Result      T      `json:"result"`
-}
+// type webhookResponse[T webhookInfo | string | bool] struct {
+// 	Ok          bool   `json:"ok"`
+// 	ErrorCode   int    `json:"error_code"`
+// 	Description string `json:"description"`
+// 	Result      T      `json:"result"`
+// }
 
 type webhookInfo struct {
 	// Webhook URL, may be empty if webhook is not set up
@@ -65,25 +67,25 @@ type webhookInfo struct {
 	AllowedUpdates []string `json:"allowed_updates,omitempty"`
 }
 
-type SetWebhookParameters struct {
+type WebhookOptions struct {
 	// HTTPS URL to send updates to. Use an empty
 	// string to remove webhook integration
-	URL string
+	URL string `json:"url" validate:"required"`
 
 	// Upload your public key certificate so that the
 	// root certificate in use can be checked. See our
 	// self-signed guide for details.
-	Certificate string
+	Certificate string `json:"certificate,omitempty"`
 
 	// The fixed IP address which will be used to send webhook
 	// requests instead of the IP address resolved through DNS
-	IPAddress string
+	IPAddress string `json:"ip_address,omitempty"`
 
 	// The maximum allowed number of simultaneous HTTPS connections
 	// to the webhook for update delivery, 1-100. Defaults to 40.
 	// Use lower values to limit the load on your bot's server, and
 	// higher values to increase your bot's throughput.
-	MaxConnections uint8
+	MaxConnections uint8 `json:"max_connections,omitempty" validate:"min=1,max=100"`
 
 	// A JSON-serialized list of the update types you want your
 	// bot to receive. For example, specify ["message",
@@ -95,69 +97,16 @@ type SetWebhookParameters struct {
 	// Please note that this parameter doesn't affect updates created
 	// before the call to the setWebhook, so unwanted updates may be
 	// received for a short period of time.
-	AllowedUpdates []string
+	AllowedUpdates []string `json:"allowed_updates,omitempty"`
 
 	// Pass True to drop all pending updates
-	DropPendingUpdates bool
+	DropPendingUpdates bool `json:"drop_pending_updates,omitempty"`
 
 	// A secret token to be sent in a header “X-Telegram-Bot-Api-Secret-Token”
 	// in every webhook request, 1-256 characters. Only characters A-Z, a-z,
 	// 0-9, _ and - are allowed. The header is useful to ensure that the
 	// request comes from a webhook set by you.
-	SecretToken string
-
-	formData url.Values
-}
-
-func (p *SetWebhookParameters) validateAndGetParams() error {
-	p.formData = url.Values{}
-
-	if p.URL == "" {
-		return fmt.Errorf("URL is required")
-	}
-	p.formData.Add("url", p.URL)
-
-	if p.IPAddress != "" {
-		if net.ParseIP(p.IPAddress) == nil {
-			return errors.New("invalid IP address")
-		}
-		p.formData.Add("ip_address", p.IPAddress)
-	}
-
-	if p.MaxConnections != 0 {
-		if p.MaxConnections > 100 {
-			return fmt.Errorf("max connections must be 1-100got %d", p.MaxConnections)
-		}
-		p.formData.Add("max_connections", fmt.Sprint(p.MaxConnections))
-	}
-
-	if len(p.AllowedUpdates) > 0 {
-		updateJSON, err := json.Marshal(p.AllowedUpdates)
-		if err != nil {
-			return fmt.Errorf("failed to marshal allowed_updates: %w", err)
-		}
-		p.formData.Add("allowed_updates", string(updateJSON))
-	}
-
-	if p.DropPendingUpdates {
-		p.formData.Add("drop_pending_updates", "true")
-	}
-
-	if p.SecretToken != "" {
-		if len(p.SecretToken) > 256 {
-			return fmt.Errorf("secret token must be 1-256 characters, got %d", len(p.SecretToken))
-		}
-
-		// Validate allowed characters: A-Z, a-z, 0-9, _, -
-		validPattern := regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
-		if !validPattern.MatchString(p.SecretToken) {
-			return fmt.Errorf("secret token contains invalid characters. Only A-Z, a-z, 0-9, _, - are allowed")
-		}
-
-		p.formData.Add("secret_token", p.SecretToken)
-	}
-
-	return nil
+	SecretToken string `json:"secret_token,omitempty" validate:"min=1,max=256"`
 }
 
 // Use this method to specify a URL and receive incoming updates via an
@@ -171,55 +120,68 @@ func (p *SetWebhookParameters) validateAndGetParams() error {
 // specify secret data in the parameter secret_token. If specified, the
 // request will contain a header “X-Telegram-Bot-Api-Secret-Token” with
 // the secret token as content.
-func (b *Bot) SetWebhook(params SetWebhookParameters) (string, error) {
-	if err := params.validateAndGetParams(); err != nil {
-		return "", err
+func (b *Bot) SetWebhook(params WebhookOptions) (string, error) {
+	if err := utils.ValidateStruct(params); err != nil {
+		return "", fmt.Errorf("invalid webhook parameters: %w", err)
+	}
+
+	if !strings.HasPrefix(params.URL, "https://") {
+		return "", errors.New("webhook URL must use HTTPS")
 	}
 
 	fullUrl := b.urlWithToken + setWebhookUrl
 
-	var resp *http.Response
+	c, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
+	defer cancel()
+
+	var resp []byte
 	var err error
 
 	if params.Certificate != "" {
-		resp, err = b.setWebhookWithCertificate(fullUrl, params)
+		resp, err = b.setWebhookWithCertificate(c, fullUrl, params)
 	} else {
-		resp, err = http.PostForm(fullUrl, params.formData)
+		resp, err = b.setWebhookWithoutCertificate(c, fullUrl, params)
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("failed to send request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	responseBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf(
-			"failed to read response body: %w, status: %d", err, resp.StatusCode,
-		)
+		return "", fmt.Errorf("failed to set webhook: %w", err)
 	}
 
-	var result webhookResponse[bool]
-
-	if err := json.Unmarshal(responseBody, &result); err != nil {
-		return "", fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf(
-			"telegram API returned non-200 status: %d, description: %s",
-			resp.StatusCode, result.Description,
-		)
-	}
-
-	if !result.Ok {
-		return "", fmt.Errorf("telegram API error: %s", result.Description)
-	}
-
-	return result.Description, nil
+	return b.parseWebhookResponse(resp)
 }
 
-func (b *Bot) setWebhookWithCertificate(fullUrl string, params SetWebhookParameters) (*http.Response, error) {
+func (b *Bot) setWebhookWithoutCertificate(
+	ctx context.Context, fullURL string, params WebhookOptions,
+) ([]byte, error) {
+	data, err := json.Marshal(params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal parameters: %w", err)
+	}
+
+	return b.api.DoRequestWithContextAndData(
+		ctx, http.MethodPost, fullURL, data,
+	)
+}
+
+func (b *Bot) setWebhookWithCertificate(
+	c context.Context, fullURL string, params WebhookOptions,
+) ([]byte, error) {
+	// Validate certificate file exists and is readable
+	fileInfo, err := os.Stat(params.Certificate)
+	if err != nil {
+		return nil, fmt.Errorf("certificate file error: %w", err)
+	}
+
+	// Check file size limit (e.g., 5MB)
+	const maxCertificateSize = 5 << 20 // 5MB
+
+	if fileInfo.Size() > maxCertificateSize {
+		return nil, fmt.Errorf(
+			"certificate file too large: %d bytes (max: %d)",
+			fileInfo.Size(), maxCertificateSize,
+		)
+	}
+
 	file, err := os.Open(params.Certificate)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open certificate file: %w", err)
@@ -229,10 +191,48 @@ func (b *Bot) setWebhookWithCertificate(fullUrl string, params SetWebhookParamet
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-	// Add other parameters
-	for key, values := range params.formData {
-		for _, vavalue := range values {
-			writer.WriteField(key, vavalue)
+	writeField := func(key, value string) error {
+		return writer.WriteField(key, value)
+	}
+
+	if err := writeField("url", params.URL); err != nil {
+		return nil, fmt.Errorf("failed to write URL field: %w", err)
+	}
+
+	if params.IPAddress != "" {
+		err := writeField("url", params.IPAddress)
+		if err != nil {
+			return nil, fmt.Errorf("failed to write URL field: %w", err)
+		}
+	}
+
+	if params.MaxConnections != 0 {
+		err := writeField("max_connections", fmt.Sprintf("%d", params.MaxConnections))
+		if err != nil {
+			return nil, fmt.Errorf("failed to write max_connections field: %w", err)
+		}
+	}
+
+	if len(params.AllowedUpdates) > 0 {
+		allowedUpdatesJSON, err := json.Marshal(params.AllowedUpdates)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal allowed_updates: %w", err)
+		}
+		err = writeField("allowed_updates", string(allowedUpdatesJSON))
+		if err != nil {
+			return nil, fmt.Errorf("failed to write allowed_updates field: %w", err)
+		}
+	}
+
+	err = writeField("drop_pending_updates", fmt.Sprintf("%t", params.DropPendingUpdates))
+	if err != nil {
+		return nil, fmt.Errorf("failed to write drop_pending_updates field: %w", err)
+	}
+
+	if params.SecretToken != "" {
+		err := writeField("secret_token", params.SecretToken)
+		if err != nil {
+			return nil, fmt.Errorf("failed to write secret_token field: %w", err)
 		}
 	}
 
@@ -241,43 +241,29 @@ func (b *Bot) setWebhookWithCertificate(fullUrl string, params SetWebhookParamet
 	if err != nil {
 		return nil, fmt.Errorf("failed to create form file: %w", err)
 	}
-	io.Copy(part, file)
-	writer.Close()
 
-	return http.Post(fullUrl, writer.FormDataContentType(), body)
+	if _, err := io.Copy(part, file); err != nil && err != io.EOF {
+		return nil, fmt.Errorf("failed to copy certificate file: %w", err)
+	}
+
+	if err := writer.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close multipart writer: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(c, http.MethodPost, fullURL, body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	return b.api.DoRequest(req)
 }
 
-// Pass True to drop all pending updates
-func (b *Bot) DeleteWebhook(dropPendingUpdates bool) (string, error) {
-	form := url.Values{}
-	form.Add("url", "")
+func (b *Bot) parseWebhookResponse(resp []byte) (string, error) {
+	var result types.APIResponse[bool]
 
-	if dropPendingUpdates {
-		form.Add("drop_pending_updates", "True")
-	}
-
-	resp, err := http.PostForm(b.urlWithToken+deleteWebhookUrl, form)
-	if err != nil {
-		return "", fmt.Errorf("HTTP request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	responseBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	var result webhookResponse[bool]
-
-	if err := json.Unmarshal(responseBody, &result); err != nil {
+	if err := json.Unmarshal(resp, &result); err != nil {
 		return "", fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf(
-			"telegram API returned non-200 status: %d, description: %s",
-			resp.StatusCode, result.Description,
-		)
 	}
 
 	if !result.Ok {
@@ -287,29 +273,56 @@ func (b *Bot) DeleteWebhook(dropPendingUpdates bool) (string, error) {
 	return result.Description, nil
 }
 
-func (b *Bot) GetWebhookInfo() (webhookInfo, error) {
-	var webhookInfoRes webhookInfo
+// Pass True to drop all pending updates
+func (b *Bot) DeleteWebhook(dropPendingUpdates bool) (string, error) {
+	fullURL := b.urlWithToken + deleteWebhookUrl
+	param := map[string]bool{"drop_pending_updates": dropPendingUpdates}
 
-	resp, err := http.Get(b.urlWithToken + getWebhookInfoUrl)
+	data, err := json.Marshal(param)
 	if err != nil {
-		return webhookInfoRes, fmt.Errorf("HTTP request failed: %w", err)
+		return "", fmt.Errorf("cannot to marshal: %w", err)
 	}
-	defer resp.Body.Close()
 
-	responseBody, err := io.ReadAll(resp.Body)
+	ctx, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
+	defer cancel()
+
+	resp, err := b.api.DoRequestWithContextAndData(ctx, http.MethodPost, fullURL, data)
+
 	if err != nil {
-		return webhookInfoRes, fmt.Errorf("failed to read response body: %w", err)
+		return "", fmt.Errorf("failed to delete webhook: %w", err)
 	}
 
-	var result webhookResponse[webhookInfo]
-
-	if err := json.Unmarshal(responseBody, &result); err != nil {
-		return webhookInfoRes, fmt.Errorf("failed to parse response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return webhookInfoRes, fmt.Errorf("telegram API returned non-200 status: %d", resp.StatusCode)
-	}
-
-	return result.Result, nil
+	return b.parseWebhookResponse(resp)
 }
+
+// func (b *Bot) GetWebhookInfo() (webhookInfo, error) {
+// 	c, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
+// 	defer cancel()
+
+// 	req, err := http.NewRequestWithContext(
+// 		c, http.MethodGet, b.urlWithToken+getWebhookInfoUrl, nil,
+// 	)
+// 	if err != nil {
+// 		return webhookInfo{}, fmt.Errorf("failed to create request: %w", err)
+// 	}
+
+// 	resp, err := b.api.DoRequest(req)
+// 	if err != nil {
+// 		return webhookInfo{}, err
+// 	}
+
+// 	var result types.APIResponse[webhookInfo]
+
+// 	if err := json.Unmarshal(resp, &result); err != nil {
+// 		return webhookInfo{}, fmt.Errorf("failed to parse response: %w", err)
+// 	}
+
+// 	if !result.Ok {
+// 		return webhookInfo{}, fmt.Errorf(
+// 			"telegram API error: code %d - %s",
+// 			result.ErrorCode, result.Description,
+// 		)
+// 	}
+
+// 	return result.Result, nil
+// }
