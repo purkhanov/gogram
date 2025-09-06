@@ -10,17 +10,18 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/purkhanov/gogram/bot"
 	"github.com/purkhanov/gogram/types"
 )
 
-func (d *dispatcher) StartWebhook(port uint16, params bot.SetWebhookParameters) error {
-	if _, err := d.Bot.SetWebhook(params); err != nil {
-		return err
-	}
+func (d *dispatcher) SetupWebhook() error {
+	_, err := d.Bot.SetWebhook(d.WebhookOptions)
 
+	return err
+}
+
+func (d *dispatcher) StartWebhookServer(port uint16) error {
 	if port == 0 {
-		return errors.New("port can not be null")
+		return errors.New("port cannot be zero")
 	}
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
@@ -29,9 +30,11 @@ func (d *dispatcher) StartWebhook(port uint16, params bot.SetWebhookParameters) 
 			return
 		}
 
+		r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySize)
+
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			log.Printf("unable to read request body: %v", err)
+			log.Printf("Unable to read request body: %v", err)
 			http.Error(w, "Bad request", http.StatusBadRequest)
 			return
 		}
@@ -40,7 +43,7 @@ func (d *dispatcher) StartWebhook(port uint16, params bot.SetWebhookParameters) 
 		var update types.Update
 
 		if err := json.Unmarshal(body, &update); err != nil {
-			log.Printf("unable to decode update: %v", err)
+			log.Printf("Unable to decode update: %v", err)
 			http.Error(w, "Bad request", http.StatusBadRequest)
 			return
 		}
@@ -48,27 +51,33 @@ func (d *dispatcher) StartWebhook(port uint16, params bot.SetWebhookParameters) 
 		select {
 		case d.updatesChan <- &update:
 			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("OK"))
 
-		case <-time.After(5 * time.Second):
-			log.Printf("timeout sending update to channel")
+		case <-time.After(channelTimeout):
+			log.Printf("Timeout sending update to channel")
 			http.Error(w, "Service unavailable", http.StatusServiceUnavailable)
 
 		case <-d.Ctx.Done():
-			log.Printf("dispatcher stopped, cannot process update")
+			log.Printf("Dispatcher stopped, cannot process update")
 			http.Error(w, "Service unavailable", http.StatusServiceUnavailable)
 		}
 	}
 
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
-		Handler: http.HandlerFunc(handler),
+		Addr:         fmt.Sprintf(":%d", port),
+		Handler:      http.HandlerFunc(handler),
+		ReadTimeout:  readTimeout,
+		WriteTimeout: writeTimeout,
 	}
+
+	d.webhookServerMu.Lock()
 	d.webhookServer = server
+	d.webhookServerMu.Unlock()
 
 	go func() {
-		log.Printf("Starting webhook server on %d", port)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Printf("webhook server error: %v", err)
+		log.Printf("Starting webhook server on port %d", port)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("Webhook server error: %v", err)
 		}
 	}()
 
@@ -78,16 +87,42 @@ func (d *dispatcher) StartWebhook(port uint16, params bot.SetWebhookParameters) 
 }
 
 func (d *dispatcher) ShutdownWebhookServer() {
-	if d.webhookServer != nil {
-		ctx, cancel := context.WithTimeout(d.Ctx, 5*time.Second)
+	d.webhookServerMu.Lock()
+	server := d.webhookServer
+	d.webhookServerMu.Unlock()
+
+	if server != nil {
+		ctx, cancel := context.WithTimeout(d.Ctx, shutdownTimeout)
 		defer cancel()
-		d.webhookServer.Shutdown(ctx)
+
+		if err := server.Shutdown(ctx); err != nil {
+			log.Printf("Error shutting down webhook server: %v", err)
+		}
 	}
+
 	d.cancel()
 }
 
-func (d *dispatcher) SetupWebhook(params bot.SetWebhookParameters) {
-	if _, err := d.Bot.SetWebhook(params); err != nil {
-		log.Println(err)
+// with gin freamwork
+type ginContext interface {
+	ShouldBindJSON(obj any) error
+	JSON(code int, obj any)
+}
+
+func (d *dispatcher) GinWebhookHandler(ctx ginContext) {
+	var update types.Update
+
+	if err := ctx.ShouldBindJSON(&update); err != nil {
+		ctx.JSON(http.StatusBadRequest, map[string]any{
+			"error":   "Invalid JSON",
+			"details": err.Error(),
+		})
+
+		return
 	}
+
+	go d.checkUpdate(&update)
+
+	ctx.JSON(http.StatusOK, map[string]string{"status": "accepted"})
+
 }
