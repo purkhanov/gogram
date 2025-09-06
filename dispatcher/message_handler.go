@@ -13,18 +13,18 @@ type messageHandler struct {
 	handler messageHandlerFunc
 }
 
-func (d *dispatcher) OnCommand(command commands.Command, handler messageHandlerFunc) {
+func (d *Dispatcher) OnCommand(command commands.Command, handler messageHandlerFunc) {
 	d.OnMessage(handler, filters.IsCommand(command))
 }
 
-func (d *dispatcher) OnMessage(handler messageHandlerFunc, filters ...filters.MessageFilter) {
+func (d *Dispatcher) OnMessage(handler messageHandlerFunc, filters ...filters.MessageFilter) {
 	d.handlers.messages = append(d.handlers.messages, messageHandler{
 		filters: filters,
 		handler: handler,
 	})
 }
 
-func (d *dispatcher) handleMessage(msg *types.Message) {
+func (d *Dispatcher) handleMessage(msg *types.Message) {
 	for _, message := range d.handlers.messages {
 		matches := true
 

@@ -10,16 +10,17 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/purkhanov/gogram/bot"
 	"github.com/purkhanov/gogram/types"
 )
 
-func (d *dispatcher) SetupWebhook() error {
-	_, err := d.Bot.SetWebhook(d.WebhookOptions)
+func (d *Dispatcher) SetupWebhook(webhookOptions bot.WebhookOptions) error {
+	_, err := d.Bot.SetWebhook(webhookOptions)
 
 	return err
 }
 
-func (d *dispatcher) StartWebhookServer(port uint16) error {
+func (d *Dispatcher) StartWebhookServer(port uint16) error {
 	if port == 0 {
 		return errors.New("port cannot be zero")
 	}
@@ -57,7 +58,7 @@ func (d *dispatcher) StartWebhookServer(port uint16) error {
 			log.Printf("Timeout sending update to channel")
 			http.Error(w, "Service unavailable", http.StatusServiceUnavailable)
 
-		case <-d.Ctx.Done():
+		case <-d.ctx.Done():
 			log.Printf("Dispatcher stopped, cannot process update")
 			http.Error(w, "Service unavailable", http.StatusServiceUnavailable)
 		}
@@ -86,21 +87,24 @@ func (d *dispatcher) StartWebhookServer(port uint16) error {
 	return nil
 }
 
-func (d *dispatcher) ShutdownWebhookServer() {
+func (d *Dispatcher) shutdownWebhookServer() {
 	d.webhookServerMu.Lock()
 	server := d.webhookServer
+	d.webhookServer = nil
 	d.webhookServerMu.Unlock()
 
 	if server != nil {
-		ctx, cancel := context.WithTimeout(d.Ctx, shutdownTimeout)
+		log.Println("ShutdownWebhookServer: shutting down HTTP server")
+
+		ctx, cancel := context.WithTimeout(d.ctx, shutdownTimeout)
 		defer cancel()
 
 		if err := server.Shutdown(ctx); err != nil {
-			log.Printf("Error shutting down webhook server: %v", err)
+			log.Printf("ShutdownWebhookServer: error: %v", err)
+		} else {
+			log.Println("ShutdownWebhookServer: HTTP server stopped")
 		}
 	}
-
-	d.cancel()
 }
 
 // with gin freamwork
@@ -109,7 +113,7 @@ type ginContext interface {
 	JSON(code int, obj any)
 }
 
-func (d *dispatcher) GinWebhookHandler(ctx ginContext) {
+func (d *Dispatcher) GinWebhookHandler(ctx ginContext) {
 	var update types.Update
 
 	if err := ctx.ShouldBindJSON(&update); err != nil {

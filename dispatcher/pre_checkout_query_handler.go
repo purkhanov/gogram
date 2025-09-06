@@ -6,10 +6,10 @@ import (
 
 type preCheckoutQueryHandlerFunc func(*types.PreCheckoutQuery)
 
-func (d *dispatcher) OnPreCheckoutQuery(handler preCheckoutQueryHandlerFunc) {
+func (d *Dispatcher) OnPreCheckoutQuery(handler preCheckoutQueryHandlerFunc) {
 	d.handlers.preCheckoutQuery = handler
 }
 
-func (d *dispatcher) handlePreCheckoutQuery(preCheckoutQuery *types.PreCheckoutQuery) {
+func (d *Dispatcher) handlePreCheckoutQuery(preCheckoutQuery *types.PreCheckoutQuery) {
 	d.handlers.preCheckoutQuery(preCheckoutQuery)
 }

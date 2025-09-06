@@ -1,6 +1,8 @@
 package dispatcher
 
 import (
+	"context"
+	"errors"
 	"log"
 	"time"
 
@@ -8,11 +10,11 @@ import (
 )
 
 const (
-	timeout   = 3600
-	sleepTime = 1 * time.Second
+	pollingTimeout = 3600
+	sleepTime      = 1 * time.Second
 )
 
-func (d *dispatcher) StartPolling(skipUpdates bool) error {
+func (d *Dispatcher) StartPolling(skipUpdates bool) error {
 	if _, err := d.Bot.DeleteWebhook(skipUpdates); err != nil {
 		return err
 	}
@@ -20,7 +22,7 @@ func (d *dispatcher) StartPolling(skipUpdates bool) error {
 	log.Println("starting polling for updates...")
 
 	params := bot.GetUpdatesOptions{
-		Timeout: timeout,
+		Timeout: pollingTimeout,
 	}
 
 	go func() {
@@ -28,13 +30,16 @@ func (d *dispatcher) StartPolling(skipUpdates bool) error {
 
 		for {
 			select {
-			case <-d.Ctx.Done():
-				log.Println("stopping polling")
+			case <-d.ctx.Done():
 				return
 			default:
 				params.Offset = d.nextOffset
 				updates, err := d.Bot.GetUpdates(params)
 				if err != nil {
+					if errors.Is(err, context.Canceled) {
+						return
+					}
+
 					log.Printf("error fetching updates: %v", err)
 					continue
 				}
@@ -42,7 +47,7 @@ func (d *dispatcher) StartPolling(skipUpdates bool) error {
 				for _, update := range updates {
 					d.nextOffset = update.UpdateID + 1
 					select {
-					case <-d.Ctx.Done():
+					case <-d.ctx.Done():
 						return
 					default:
 						d.updatesChan <- update
@@ -55,8 +60,4 @@ func (d *dispatcher) StartPolling(skipUpdates bool) error {
 	go d.processUpdates(d.updatesChan)
 
 	return nil
-}
-
-func (d *dispatcher) Shutdown() {
-	d.cancel()
 }

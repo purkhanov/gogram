@@ -20,16 +20,15 @@ const (
 	maxRequestBodySize = 1 << 20 // 1 MB
 )
 
-type dispatcher struct {
-	Bot            *bot.Bot
-	WebhookOptions bot.WebhookOptions
-	updatesChan    chan *types.Update
-	nextOffset     int
+type Dispatcher struct {
+	Bot         *bot.Bot
+	updatesChan chan *types.Update
+	nextOffset  int
 
 	webhookServer   *http.Server
 	webhookServerMu sync.RWMutex
 
-	Ctx    context.Context
+	ctx    context.Context
 	cancel context.CancelFunc
 
 	handlers handlers
@@ -42,21 +41,19 @@ type handlers struct {
 	shippingQuery    shippingQueryHandlerFunc
 }
 
-func NewDispatcher(bot *bot.Bot) *dispatcher {
-	ctx, cancel := context.WithCancel(bot.Ctx)
-
-	return &dispatcher{
+func NewDispatcher(bot *bot.Bot) *Dispatcher {
+	return &Dispatcher{
 		Bot:         bot,
 		updatesChan: make(chan *types.Update, bufferSize),
-		Ctx:         ctx,
-		cancel:      cancel,
+		ctx:         bot.Ctx,
+		cancel:      bot.Cancel,
 	}
 }
 
-func (d *dispatcher) processUpdates(updatesChan <-chan *types.Update) {
+func (d *Dispatcher) processUpdates(updatesChan <-chan *types.Update) {
 	for {
 		select {
-		case <-d.Ctx.Done():
+		case <-d.ctx.Done():
 			return
 
 		case update, ok := <-updatesChan:
@@ -69,7 +66,7 @@ func (d *dispatcher) processUpdates(updatesChan <-chan *types.Update) {
 	}
 }
 
-func (d *dispatcher) checkUpdate(update *types.Update) {
+func (d *Dispatcher) checkUpdate(update *types.Update) {
 	switch {
 	case update.Message != nil:
 		d.handleMessage(update.Message)
@@ -86,4 +83,18 @@ func (d *dispatcher) checkUpdate(update *types.Update) {
 	default:
 		log.Println("unknown update type", update)
 	}
+}
+
+func (d *Dispatcher) Shutdown() {
+	d.webhookServerMu.Lock()
+	server := d.webhookServer
+	d.webhookServerMu.Unlock()
+
+	if server != nil {
+		d.shutdownWebhookServer()
+	}
+
+	d.cancel()
+
+	time.Sleep(1 * time.Second)
 }
