@@ -4,19 +4,30 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/purkhanov/gogram/bot"
 	"github.com/purkhanov/gogram/types"
 )
 
-const bufferSize = 20
+const (
+	bufferSize         = 20
+	readTimeout        = 10 * time.Second
+	writeTimeout       = 10 * time.Second
+	shutdownTimeout    = 5 * time.Second
+	channelTimeout     = 5 * time.Second
+	maxRequestBodySize = 1 << 20 // 1 MB
+)
 
 type dispatcher struct {
-	Bot         *bot.Bot
-	updatesChan chan *types.Update
-	nextOffset  int
+	Bot            *bot.Bot
+	WebhookOptions bot.WebhookOptions
+	updatesChan    chan *types.Update
+	nextOffset     int
 
-	webhookServer *http.Server
+	webhookServer   *http.Server
+	webhookServerMu sync.RWMutex
 
 	Ctx    context.Context
 	cancel context.CancelFunc
