@@ -10,17 +10,16 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/purkhanov/gogram/bot"
 	"github.com/purkhanov/gogram/types"
 )
 
-func (d *Dispatcher) SetupWebhook(webhookOptions bot.WebhookOptions) error {
-	_, err := d.Bot.SetWebhook(webhookOptions)
-
-	return err
-}
+const webhookSecretToken = "X-Telegram-Bot-Api-Secret-Token"
 
 func (d *Dispatcher) StartWebhookServer(port uint16) error {
+	if d.Bot.WebhookOptions == nil {
+		return fmt.Errorf("webhookOptions is empty")
+	}
+
 	if port == 0 {
 		return errors.New("port cannot be zero")
 	}
@@ -29,6 +28,17 @@ func (d *Dispatcher) StartWebhookServer(port uint16) error {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
+		}
+
+		if d.Bot.WebhookOptions != nil && d.Bot.WebhookOptions.SecretToken != "" {
+			receivedToken := r.Header.Get(webhookSecretToken)
+			expectedToken := d.Bot.WebhookOptions.SecretToken
+
+			if receivedToken != expectedToken {
+				log.Printf("Invalid secret token: received '%s', expected '%s'", receivedToken, expectedToken)
+				http.Error(w, "Invalid secret token", http.StatusUnauthorized)
+				return
+			}
 		}
 
 		r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySize)

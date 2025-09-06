@@ -42,6 +42,14 @@ type handlers struct {
 }
 
 func NewDispatcher(bot *bot.Bot) *Dispatcher {
+	if bot.WebhookOptions != nil {
+		res, err := bot.SetWebhook()
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println(res)
+	}
+
 	return &Dispatcher{
 		Bot:         bot,
 		updatesChan: make(chan *types.Update, bufferSize),

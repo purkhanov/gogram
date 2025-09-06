@@ -21,16 +21,19 @@ type Bot struct {
 	api          *api.ApiClient
 	Ctx          context.Context
 	Cancel       context.CancelFunc
+
+	WebhookOptions *WebhookOptions
 }
 
-func NewBot(token string) *Bot {
+func NewBot(token string, webhookOptions *WebhookOptions) *Bot {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Bot{
-		token:        token,
-		urlWithToken: fmt.Sprintf("%s/bot%s", baseUrl, token),
-		api:          api.NewClient(&http.Client{}),
-		Ctx:          ctx,
-		Cancel:       cancel,
+		token:          token,
+		urlWithToken:   fmt.Sprintf("%s/bot%s", baseUrl, token),
+		api:            api.NewClient(&http.Client{}),
+		Ctx:            ctx,
+		Cancel:         cancel,
+		WebhookOptions: webhookOptions,
 	}
 }

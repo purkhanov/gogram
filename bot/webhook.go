@@ -120,12 +120,12 @@ type WebhookOptions struct {
 // specify secret data in the parameter secret_token. If specified, the
 // request will contain a header “X-Telegram-Bot-Api-Secret-Token” with
 // the secret token as content.
-func (b *Bot) SetWebhook(params WebhookOptions) (string, error) {
-	if err := utils.ValidateStruct(params); err != nil {
+func (b *Bot) SetWebhook() (string, error) {
+	if err := utils.ValidateStruct(*b.WebhookOptions); err != nil {
 		return "", fmt.Errorf("invalid webhook parameters: %w", err)
 	}
 
-	if !strings.HasPrefix(params.URL, "https://") {
+	if !strings.HasPrefix(b.WebhookOptions.URL, "https://") {
 		return "", errors.New("webhook URL must use HTTPS")
 	}
 
@@ -137,10 +137,10 @@ func (b *Bot) SetWebhook(params WebhookOptions) (string, error) {
 	var resp []byte
 	var err error
 
-	if params.Certificate != "" {
-		resp, err = b.setWebhookWithCertificate(c, fullUrl, params)
+	if b.WebhookOptions.Certificate != "" {
+		resp, err = b.setWebhookWithCertificate(c, fullUrl, b.WebhookOptions)
 	} else {
-		resp, err = b.setWebhookWithoutCertificate(c, fullUrl, params)
+		resp, err = b.setWebhookWithoutCertificate(c, fullUrl, b.WebhookOptions)
 	}
 
 	if err != nil {
@@ -151,7 +151,7 @@ func (b *Bot) SetWebhook(params WebhookOptions) (string, error) {
 }
 
 func (b *Bot) setWebhookWithoutCertificate(
-	ctx context.Context, fullURL string, params WebhookOptions,
+	ctx context.Context, fullURL string, params *WebhookOptions,
 ) ([]byte, error) {
 	data, err := json.Marshal(params)
 	if err != nil {
@@ -164,7 +164,7 @@ func (b *Bot) setWebhookWithoutCertificate(
 }
 
 func (b *Bot) setWebhookWithCertificate(
-	c context.Context, fullURL string, params WebhookOptions,
+	c context.Context, fullURL string, params *WebhookOptions,
 ) ([]byte, error) {
 	// Validate certificate file exists and is readable
 	fileInfo, err := os.Stat(params.Certificate)
