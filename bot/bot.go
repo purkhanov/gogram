@@ -20,15 +20,17 @@ type Bot struct {
 	urlWithToken string
 	api          *api.ApiClient
 	Ctx          context.Context
+	Cancel       context.CancelFunc
 }
 
 func NewBot(token string) *Bot {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Bot{
 		token:        token,
 		urlWithToken: fmt.Sprintf("%s/bot%s", baseUrl, token),
 		api:          api.NewClient(&http.Client{}),
 		Ctx:          ctx,
+		Cancel:       cancel,
 	}
 }
