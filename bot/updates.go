@@ -58,7 +58,7 @@ func (b *Bot) GetUpdates(params GetUpdatesOptions) ([]*types.Update, error) {
 		return nil, fmt.Errorf("failed to marshal params: %v", err)
 	}
 
-	resp, err := b.api.DoRequestWithData(http.MethodPost, b.urlWithToken+getUpdatesUrl, data)
+	resp, err := b.api.DoRequestWithContextAndData(b.Ctx, http.MethodPost, b.urlWithToken+getUpdatesUrl, data)
 	if err != nil {
 		return nil, err
 	}
