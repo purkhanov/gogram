@@ -68,7 +68,7 @@ func (d *Dispatcher) StartWebhookServer(port uint16) error {
 			log.Printf("Timeout sending update to channel")
 			http.Error(w, "Service unavailable", http.StatusServiceUnavailable)
 
-		case <-d.ctx.Done():
+		case <-d.Ctx.Done():
 			log.Printf("Dispatcher stopped, cannot process update")
 			http.Error(w, "Service unavailable", http.StatusServiceUnavailable)
 		}
@@ -106,7 +106,7 @@ func (d *Dispatcher) shutdownWebhookServer() {
 	if server != nil {
 		log.Println("ShutdownWebhookServer: shutting down HTTP server")
 
-		ctx, cancel := context.WithTimeout(d.ctx, shutdownTimeout)
+		ctx, cancel := context.WithTimeout(d.Ctx, shutdownTimeout)
 		defer cancel()
 
 		if err := server.Shutdown(ctx); err != nil {

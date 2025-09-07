@@ -30,7 +30,7 @@ func (d *Dispatcher) StartPolling(skipUpdates bool) error {
 
 		for {
 			select {
-			case <-d.ctx.Done():
+			case <-d.Ctx.Done():
 				return
 			default:
 				params.Offset = d.nextOffset
@@ -47,7 +47,7 @@ func (d *Dispatcher) StartPolling(skipUpdates bool) error {
 				for _, update := range updates {
 					d.nextOffset = update.UpdateID + 1
 					select {
-					case <-d.ctx.Done():
+					case <-d.Ctx.Done():
 						return
 					default:
 						d.updatesChan <- update
