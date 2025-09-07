@@ -34,7 +34,7 @@ func (d *Dispatcher) StartPolling(skipUpdates bool) error {
 				return
 			default:
 				params.Offset = d.nextOffset
-				updates, err := d.Bot.GetUpdates(params)
+				updates, err := d.GetUpdates(params)
 				if err != nil {
 					if errors.Is(err, context.Canceled) {
 						return

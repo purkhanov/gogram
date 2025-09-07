@@ -16,7 +16,7 @@ import (
 const webhookSecretToken = "X-Telegram-Bot-Api-Secret-Token"
 
 func (d *Dispatcher) StartWebhookServer(port uint16) error {
-	if d.Bot.WebhookOptions == nil {
+	if d.WebhookOptions == nil {
 		return fmt.Errorf("webhookOptions is empty")
 	}
 
@@ -30,9 +30,9 @@ func (d *Dispatcher) StartWebhookServer(port uint16) error {
 			return
 		}
 
-		if d.Bot.WebhookOptions != nil && d.Bot.WebhookOptions.SecretToken != "" {
+		if d.WebhookOptions != nil && d.WebhookOptions.SecretToken != "" {
 			receivedToken := r.Header.Get(webhookSecretToken)
-			expectedToken := d.Bot.WebhookOptions.SecretToken
+			expectedToken := d.WebhookOptions.SecretToken
 
 			if receivedToken != expectedToken {
 				log.Printf("Invalid secret token: received '%s', expected '%s'", receivedToken, expectedToken)
