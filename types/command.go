@@ -1,4 +1,4 @@
-package commands
+package types
 
 type Command string
 

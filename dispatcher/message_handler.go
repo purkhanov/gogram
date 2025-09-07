@@ -1,7 +1,6 @@
 package dispatcher
 
 import (
-	"github.com/purkhanov/gogram/commands"
 	filters "github.com/purkhanov/gogram/filter"
 	"github.com/purkhanov/gogram/types"
 )
@@ -13,7 +12,7 @@ type messageHandler struct {
 	handler messageHandlerFunc
 }
 
-func (d *Dispatcher) OnCommand(command commands.Command, handler messageHandlerFunc) {
+func (d *Dispatcher) OnCommand(command types.Command, handler messageHandlerFunc) {
 	d.OnMessage(handler, filters.IsCommand(command))
 }
 

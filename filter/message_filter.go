@@ -4,7 +4,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/purkhanov/gogram/commands"
 	"github.com/purkhanov/gogram/types"
 )
 
@@ -29,7 +28,7 @@ func TextMatches(pattern string) MessageFilter {
 	}
 }
 
-func IsCommand(command commands.Command) MessageFilter {
+func IsCommand(command types.Command) MessageFilter {
 	return func(m *types.Message) bool {
 		return m.Text == string(command)
 	}
