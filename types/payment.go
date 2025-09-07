@@ -48,7 +48,7 @@ type PreCheckoutQuery struct {
 	// pass amount = 145. See the exp parameter in currencies.json,
 	// it shows the number of digits past the decimal point for each
 	// currency (2 for the majority of currencies).
-	TotaAmount int `json:"total_amount"`
+	TotalAmount int `json:"total_amount"`
 
 	// Bot-specified invoice payload
 	InvoicePayload string `json:"invoice_payload"`
