@@ -51,7 +51,7 @@ type SendMessageOptions struct {
 	Entities []types.MessageEntity `json:"entities,omitempty"`
 
 	// Link preview generation options for the message
-	LinkPreviewOptions any `json:"link_preview_options,omitempty"`
+	LinkPreviewOptions types.LinkPreviewOptions `json:"link_preview_options,omitempty"`
 
 	// Sends the message silently. Users will
 	// receive a notification with no sound.
@@ -73,10 +73,10 @@ type SendMessageOptions struct {
 	// suggested post to send; for direct messages chats only.
 	// If the message is sent as a reply to another suggested post,
 	// then that suggested post is automatically declined.
-	SuggestedPostParameters any `json:"suggested_post_parameters,omitempty"`
+	SuggestedPostParameters types.SuggestedPostParameters `json:"suggested_post_parameters,omitempty"`
 
 	// Description of the message to reply to
-	ReplyParameters any `json:"reply_parameters,omitempty"`
+	ReplyParameters types.ReplyParameters `json:"reply_parameters,omitempty"`
 
 	// Additional interface options. A JSON-serialized object for
 	// an inline keyboard, custom reply keyboard, instructions to
