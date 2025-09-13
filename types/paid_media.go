@@ -11,6 +11,9 @@ type PaidMediaInfo struct {
 
 // This object describes paid media. Currently, it can be one of
 type PaidMedia interface {
+	// PaidMediaPreview
+	// PaidMediaPhoto
+	// PaidMediaVideo
 	getPaidMediaType() string
 }
 
@@ -29,10 +32,6 @@ type PaidMediaPreview struct {
 	Duration int `json:"duration,omitempty"`
 }
 
-func (p *PaidMediaPreview) getPaidMediaType() string {
-	return p.Type
-}
-
 // The paid media is a photo.
 type PaidMediaPhoto struct {
 	// Type of the paid media, always “photo”
@@ -42,10 +41,6 @@ type PaidMediaPhoto struct {
 	Photo []PhotoSize `json:"photo"`
 }
 
-func (p *PaidMediaPhoto) getPaidMediaType() string {
-	return p.Type
-}
-
 // The paid media is a video.
 type PaidMediaVideo struct {
 	// Type of the paid media, always “video”
@@ -53,8 +48,4 @@ type PaidMediaVideo struct {
 
 	// The video
 	Video *Video `json:"video"`
-}
-
-func (p *PaidMediaVideo) getPaidMediaType() string {
-	return p.Type
 }

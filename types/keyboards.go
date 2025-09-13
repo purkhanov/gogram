@@ -1,7 +1,5 @@
 package types
 
-import "fmt"
-
 // This object represents a custom keyboard with reply options
 // (see Introduction to bots (https://core.telegram.org/bots/features#keyboards)
 // for details and examples). Not supported in channels and for messages sent
@@ -44,14 +42,6 @@ type ReplyKeyboardMarkup struct {
 	Selective bool `json:"selective,omitempty"`
 }
 
-func (r ReplyKeyboardMarkup) ValidateReplyMarkup() error {
-	if len(r.Keyboard) == 0 {
-		return fmt.Errorf("keyboard must have at least one button")
-	}
-
-	return nil
-}
-
 // Upon receiving a message with this object, Telegram
 // clients will remove the current custom keyboard and
 // display the default letter-keyboard. By default,
@@ -82,10 +72,6 @@ type ReplyKeyboardRemove struct {
 	// showing the keyboard with poll options to
 	// users who haven't voted yet.
 	Selective bool `json:"selective,omitempty"`
-}
-
-func (r ReplyKeyboardRemove) ValidateReplyMarkup() error {
-	return nil
 }
 
 // This object represents one button of the reply keyboard.
@@ -142,34 +128,6 @@ type InlineKeyboardMarkup struct {
 	// Array of button rows, each represented by an
 	// Array of InlineKeyboardButton objects
 	InlineKeyboard [][]InlineKeyboardButton `json:"inline_keyboard"`
-}
-
-func (i InlineKeyboardMarkup) ValidateReplyMarkup() error {
-	if len(i.InlineKeyboard) == 0 {
-		return fmt.Errorf("inline keyboard must have at least one row")
-	}
-
-	for rowIndex, row := range i.InlineKeyboard {
-		if len(row) == 0 {
-			return fmt.Errorf("row %d must have at least one button", rowIndex)
-		}
-
-		for keyboardIndex, keyboard := range row {
-			if keyboard.Text == "" {
-				return fmt.Errorf("keyboard at row %d, position %d: text is required", rowIndex, keyboardIndex)
-			}
-
-			if len(keyboard.Url) == 0 &&
-				len(keyboard.CallbackData) == 0 &&
-				len(keyboard.SwitchInlineQuery) == 0 {
-				return fmt.Errorf(
-					"keyboard '%s' at row %d, position %d: must have exactly one action (url, callback_data, web_app, etc)",
-					keyboard.Text, rowIndex, keyboardIndex,
-				)
-			}
-		}
-	}
-	return nil
 }
 
 // This object represents one button of an inline keyboard.
@@ -291,8 +249,4 @@ type ForceReply struct {
 	// message in the same chat and forum topic,
 	// sender of the original message.
 	Selective bool `json:"selective,omitempty"`
-}
-
-func (f ForceReply) ValidateReplyMarkup() error {
-	return nil
 }
