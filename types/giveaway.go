@@ -1,5 +1,13 @@
 package types
 
+// This object represents a service message
+// about the creation of a scheduled giveaway.
+type GiveawayCreated struct {
+	// Optional. The number of Telegram Stars to be split between
+	// giveaway winners; for Telegram Star giveaways only
+	PrizeStarCount int `json:"prize_star_count,omitempty"`
+}
+
 // This object represents a message about a scheduled giveaway.
 type Giveaway struct {
 	// The list of chats which the user must join to participate in the giveaway
@@ -83,4 +91,23 @@ type GiveawayWinners struct {
 
 	// Optional. Description of additional giveaway prize
 	PrizeDescription string `json:"prize_description,omitempty"`
+}
+
+// This object represents a service message about the
+// completion of a giveaway without public winners.
+type GiveawayCompleted struct {
+	// Number of winners in the giveaway
+	WinnerCount int `json:"winner_count"`
+
+	// Optional. Number of undistributed prizes
+	UnclaimedPrizeCount int `json:"unclaimed_prize_count,omitempty"`
+
+	// Optional. Message with the giveaway that
+	// was completed, if it wasn't deleted
+	GiveawayMessage *Message `json:"giveaway_message,omitempty"`
+
+	// Optional. True, if the giveaway is a Telegram
+	// Star giveaway. Otherwise, currently, the
+	// giveaway is a Telegram Premium giveaway.
+	IsStarGiveaway bool `json:"is_star_giveaway,omitempty"`
 }

@@ -74,7 +74,7 @@ type Message struct {
 
 	// Optional. Information about the message that is being
 	// replied to, which may come from another chat or forum topic
-	ExternalReply *any `json:"external_reply,omitempty"`
+	ExternalReply *ExternalReplyInfo `json:"external_reply,omitempty"`
 
 	// Optional. For replies that quote part of the
 	// original message, the quoted part of the message
@@ -136,34 +136,34 @@ type Message struct {
 	// Optional. Message is an animation, information about
 	// the animation. For backward compatibility, when this
 	// field is set, the document field will also be set
-	Animation *any `json:"animation,omitempty"`
+	Animation *Animation `json:"animation,omitempty"`
 
 	// Optional. Message is an audio file, information about the file
-	Audio *any `json:"audio,omitempty"`
+	Audio *Audio `json:"audio,omitempty"`
 
 	// Optional. Message is a general file, information about the file
-	Document *any `json:"document,omitempty"`
+	Document *Document `json:"document,omitempty"`
 
 	// Optional. Message contains paid media; information about the paid media
-	PaidMedia *any `json:"paid_media,omitempty"`
+	PaidMedia *PaidMediaInfo `json:"paid_media,omitempty"`
 
 	// Optional. Message is a photo, available sizes of the photo
-	Photo []any `json:"photo,omitempty"`
+	Photo []PhotoSize `json:"photo,omitempty"`
 
 	// Optional. Message is a sticker, information about the sticker
-	Sticker *any `json:"sticker,omitempty"`
+	Sticker *Sticker `json:"sticker,omitempty"`
 
 	// Optional. Message is a forwarded story
 	Story *Story `json:"story,omitempty"`
 
 	// Optional. Message is a video, information about the video
-	Video *any `json:"video,omitempty"`
+	Video *Video `json:"video,omitempty"`
 
 	// Optional. Message is a video note, information about the video message
-	VideoNote *any `json:"video_note,omitempty"`
+	VideoNote *VideoNote `json:"video_note,omitempty"`
 
 	// Optional. Message is a voice message, information about the file
-	Voice *any `json:"voice,omitempty"`
+	Voice *Voice `json:"voice,omitempty"`
 
 	// Optional. Caption for the animation, audio,
 	// document, paid media, photo, video or voice
@@ -179,14 +179,17 @@ type Message struct {
 	// Optional. True, if the message media is covered by a spoiler animation
 	HasMediaSpoiler bool `json:"has_media_spoiler,omitempty"`
 
+	// Optional. Message is a checklist
+	Checklist *Checklist `json:"checklist,omitempty"`
+
 	// Optional. Message is a shared contact, information about the contact
-	Contact *any `json:"contact,omitempty"`
+	Contact *Contact `json:"contact,omitempty"`
 
 	// Optional. Message is a dice with random value
-	Dice *any `json:"dice,omitempty"`
+	Dice *Dice `json:"dice,omitempty"`
 
 	// Optional. Message is a game, information about the game.
-	Game *any `json:"game,omitempty"`
+	Game *Game `json:"game,omitempty"`
 
 	// Optional. Message is a native poll, information about the poll
 	Poll *Poll `json:"poll,omitempty"`
@@ -194,7 +197,7 @@ type Message struct {
 	// Optional. Message is a venue, information about
 	// the venue. For backward compatibility, when this
 	// field is set, the location field will also be set
-	Venue *any `json:"venue,omitempty"`
+	Venue *Venue `json:"venue,omitempty"`
 
 	// Optional. Message is a shared location, information about the location
 	Location *Location `json:"location,omitempty"`
@@ -212,7 +215,7 @@ type Message struct {
 	NewChatTitle string `json:"new_chat_title,omitempty"`
 
 	// Optional. A chat photo was change to this value
-	NewChatPhoto []any `json:"new_chat_photo,omitempty"`
+	NewChatPhoto []PhotoSize `json:"new_chat_photo,omitempty"`
 
 	// Optional. Service message: the chat photo was deleted
 	DeleteChatPhoto bool `json:"delete_chat_photo,omitempty"`
@@ -259,7 +262,7 @@ type Message struct {
 	// Optional. Specified message was pinned. Note that the
 	// Message object in this field will not contain further
 	// reply_to_message fields even if it itself is a reply.
-	PinnedMessage *any `json:"pinned_message,omitempty"`
+	PinnedMessage *MaybeInaccessibleMessage `json:"pinned_message,omitempty"`
 
 	// Optional. Message is an invoice for a payment, information
 	// about the invoice. https://core.telegram.org/bots/api#payments
@@ -268,21 +271,24 @@ type Message struct {
 	// Optional. Message is a service message about a
 	// successful payment, information about the payment.
 	// https://core.telegram.org/bots/api#payments
-	SuccessfulPayment *any `json:"successful_payment,omitempty"`
+	SuccessfulPayment *SuccessfulPayment `json:"successful_payment,omitempty"`
 
 	// Optional. Message is a service message about a refunded
 	// payment, information about the payment.
 	// https://core.telegram.org/bots/api#payments
-	RefundedPayment *any `json:"refunded_payment,omitempty"`
+	RefundedPayment *RefundedPayment `json:"refunded_payment,omitempty"`
 
 	// Optional. Service message: users were shared with the bot
-	UsersShared *any `json:"users_shared,omitempty"`
+	UsersShared *UsersShared `json:"users_shared,omitempty"`
+
+	// Optional. Service message: a chat was shared with the bot
+	ChatShared *ChatShared `json:"chat_shared,omitempty"`
 
 	// Optional. Service message: a regular gift was sent or received
-	Gift *any `json:"gift,omitempty"`
+	Gift *GiftInfo `json:"gift,omitempty"`
 
 	// Optional. Service message: a unique gift was sent or received
-	UniqueGift *any `json:"unique_gift,omitempty"`
+	UniqueGift *UniqueGiftInfo `json:"unique_gift,omitempty"`
 
 	// Optional. The domain name of the website on which the user has logged in.
 	// https://core.telegram.org/widgets/login
@@ -292,72 +298,108 @@ type Message struct {
 	// messages after adding it to the attachment or side menu,
 	// launching a Web App from a link, or accepting an explicit
 	// request from a Web App sent by the method requestWriteAccess
-	WriteAccessAllowed *any `json:"write_access_allowed,omitempty"`
+	WriteAccessAllowed *WriteAccessAllowed `json:"write_access_allowed,omitempty"`
 
 	// Optional. Telegram Passport data
-	PassportData *any `json:"passport_data,omitempty"`
+	PassportData *PassportData `json:"passport_data,omitempty"`
 
 	// Optional. Service message. A user in the chat triggered
 	// another user's proximity alert while sharing Live Location.
-	ProximityAlertTriggered *any `json:"proximity_alert_triggered,omitempty"`
+	ProximityAlertTriggered *ProximityAlertTriggered `json:"proximity_alert_triggered,omitempty"`
 
 	// Optional. Service message: user boosted the chat
-	BoostAdded *any `json:"boost_added,omitempty"`
+	BoostAdded *ChatBoostAdded `json:"boost_added,omitempty"`
 
 	// Optional. Service message: chat background set
-	ChatBackgroundSet *any `json:"chat_background_set,omitempty"`
+	ChatBackgroundSet *ChatBackground `json:"chat_background_set,omitempty"`
+
+	// Optional. Service message: some tasks in a checklist were marked as done or not done
+	ChecklistTasksDone *ChecklistTasksDone `json:"checklist_tasks_done,omitempty"`
+
+	// Optional. Service message: tasks were added to a checklist
+	ChecklistTasksAdded *ChecklistTasksAdded `json:"checklist_tasks_added,omitempty"`
+
+	// Optional. Service message: the price for paid messages in
+	// the corresponding direct messages chat of a channel has changed
+	DirectMessagePriceChanged *DirectMessagePriceChanged `json:"direct_message_price_changed,omitempty"`
 
 	// Optional. Service message: forum topic created
-	ForumTopicCreated *any `json:"forum_topic_created,omitempty"`
+	ForumTopicCreated *ForumTopicCreated `json:"forum_topic_created,omitempty"`
 
 	// Optional. Service message: forum topic edited
-	ForumTopicEdited *any `json:"forum_topic_edited,omitempty"`
+	ForumTopicEdited *ForumTopicEdited `json:"forum_topic_edited,omitempty"`
 
 	// Optional. Service message: forum topic closed
-	ForumTopicClosed *any `json:"forum_topic_closed,omitempty"`
+	ForumTopicClosed *ForumTopicClosed `json:"forum_topic_closed,omitempty"`
 
 	// Optional. Service message: forum topic reopened
-	ForumTopicReopened *any `json:"forum_topic_reopened,omitempty"`
+	ForumTopicReopened *ForumTopicReopened `json:"forum_topic_reopened,omitempty"`
 
 	// Optional. Service message: the 'General' forum topic hidden
-	GeneralForumTopicHidden *any `json:"general_forum_topic_hidden,omitempty"`
+	GeneralForumTopicHidden *GeneralForumTopicHidden `json:"general_forum_topic_hidden,omitempty"`
 
 	// Optional. Service message: the 'General' forum topic unhidden
-	GeneralForumTopicUnhidden *any `json:"general_forum_topic_unhidden,omitempty"`
+	GeneralForumTopicUnhidden *GeneralForumTopicUnhidden `json:"general_forum_topic_unhidden,omitempty"`
 
 	// Optional. Service message: a scheduled giveaway was created
-	GiveawayCreated *any `json:"giveaway_created,omitempty"`
+	GiveawayCreated *GiveawayCreated `json:"giveaway_created,omitempty"`
 
 	// Optional. The message is a scheduled giveaway message
-	Giveaway *any `json:"giveaway,omitempty"`
+	Giveaway *Giveaway `json:"giveaway,omitempty"`
 
 	// Optional. A giveaway with public winners was completed
-	GiveawayWinners *any `json:"giveaway_winners,omitempty"`
+	GiveawayWinners *GiveawayWinners `json:"giveaway_winners,omitempty"`
 
 	// Optional. Service message: a giveaway without public winners was completed
-	GiveawayCompleted *any `json:"giveaway_completed,omitempty"`
+	GiveawayCompleted *GiveawayCompleted `json:"giveaway_completed,omitempty"`
 
 	// Optional. Service message: the price for paid messages has changed in the chat
-	PaidMessagePriceChanged *any `json:"paid_message_price_changed,omitempty"`
+	PaidMessagePriceChanged *PaidMessagePriceChanged `json:"paid_message_price_changed,omitempty"`
+
+	// Optional. Service message: a suggested post was approved
+	SuggestedPostApproved *SuggestedPostApproved `json:"suggested_post_approved,omitempty"`
+
+	// Optional. Service message: approval of a suggested post has failed
+	SuggestedPostApprovalFailed *SuggestedPostApprovalFailed `json:"suggested_post_approval_failed,omitempty"`
+
+	// Optional. Service message: a suggested post was declined
+	SuggestedPostDeclined *SuggestedPostDeclined `json:"suggested_post_declined,omitempty"`
+
+	// Optional. Service message: payment for a suggested post was received
+	SuggestedPostPaid *SuggestedPostPaid `json:"suggested_post_paid,omitempty"`
+
+	// Optional. Service message: payment for a suggested post was refunded
+	SuggestedPostRefunded *SuggestedPostRefunded `json:"suggested_post_refunded,omitempty"`
 
 	// Optional. Service message: video chat scheduled
-	VideoChatScheduled *any `json:"video_chat_scheduled,omitempty"`
+	VideoChatScheduled *VideoChatScheduled `json:"video_chat_scheduled,omitempty"`
 
 	// Optional. Service message: video chat started
-	VideoChatStarted *any `json:"video_chat_started,omitempty"`
+	VideoChatStarted *VideoChatStarted `json:"video_chat_started,omitempty"`
 
 	// Optional. Service message: video chat ended
-	VideoChatEnded *any `json:"video_chat_ended,omitempty"`
+	VideoChatEnded *VideoChatEnded `json:"video_chat_ended,omitempty"`
 
 	// Optional. Service message: new participants invited to a video chat
-	VideoChatParticipantsInvited *any `json:"video_chat_participants_invited,omitempty"`
+	VideoChatParticipantsInvited *VideoChatParticipantsInvited `json:"video_chat_participants_invited,omitempty"`
 
 	// Optional. Service message: data sent by a Web App
-	WebAppData *any `json:"web_app_data,omitempty"`
+	WebAppData *WebAppData `json:"web_app_data,omitempty"`
 
 	// Optional. Inline keyboard attached to the message.
 	// login_url buttons are represented as ordinary url buttons.
 	ReplyMarkup *InlineKeyboardMarkup `json:"reply_markup,omitempty"`
+}
+
+// This object represents a unique message identifier.
+type MessageId struct {
+	// Unique message identifier. In specific instances
+	// (e.g., message containing a video sent to a big chat),
+	// the server might automatically schedule a message
+	// instead of sending it immediately. In such cases,
+	// this field will be 0 and the relevant message will
+	// be unusable until it is actually sent
+	MessageID int `json:"message_id"`
 }
 
 type InaccessibleMessage struct {
@@ -370,6 +412,13 @@ type InaccessibleMessage struct {
 	// Always 0. The field can be used to differentiate
 	// regular and inaccessible messages.
 	Date int `json:"date"`
+}
+
+// This object describes a message that can be
+// inaccessible to the bot. It can be one of
+type MaybeInaccessibleMessage struct {
+	*Message
+	*InaccessibleMessage
 }
 
 type MessageEntity struct {
@@ -421,5 +470,49 @@ type DirectMessagesTopic struct {
 
 	// Optional. Information about the user that created the topic.
 	// Currently, it is always present
-	USer User `json:"user,omitempty"`
+	User User `json:"user,omitempty"`
+}
+
+// Describes a service message about a change in the
+// price of direct messages sent to a channel chat.
+type DirectMessagePriceChanged struct {
+	// True, if direct messages are enabled for the channel chat; false otherwise
+	AreDirectMessagesEnabled bool `json:"are_direct_messages_enabled"`
+
+	// Optional. The new number of Telegram Stars that
+	// must be paid by users for each direct message sent
+	// to the channel. Does not apply to users who have been
+	// exempted by administrators. Defaults to 0.
+	DirectMessageStarCount int `json:"direct_message_star_count,omitempty"`
+}
+
+// This object contains information about the quoted part
+// of a message that is replied to by the given message.
+type TextQuote struct {
+	// Text of the quoted part of a message that
+	// is replied to by the given message
+	Text string `json:"text"`
+
+	// Optional. Special entities that appear in the quote.
+	// Currently, only bold, italic, underline, strikethrough,
+	// spoiler, and custom_emoji entities are kept in quotes.
+	Entities []MessageEntity `json:"entities,omitempty"`
+
+	// Approximate quote position in the original message in
+	// UTF-16 code units as specified by the sender
+	Position int `json:"position,omitempty"`
+
+	// Optional. True, if the quote was chosen manually
+	// by the message sender. Otherwise, the quote was
+	// added automatically by the server.
+	IsManual bool `json:"is_manual,omitempty"`
+}
+
+// Describes a service message about a change
+// in the price of paid messages within a chat.
+type PaidMessagePriceChanged struct {
+	// The new number of Telegram Stars that must
+	// be paid by non-administrator users of the
+	// supergroup chat for each sent message
+	PaidMessageStarCount int `json:"paid_message_star_count"`
 }

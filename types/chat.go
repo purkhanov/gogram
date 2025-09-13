@@ -179,38 +179,36 @@ type ChatJoinRequest struct {
 	InviteLink *ChatInviteLink `json:"invite_link,omitempty"`
 }
 
-type ChatBoostUpdated struct {
-	Chat  Chat      `json:"chat"`  // Chat which was boosted
-	Boost ChatBoost `json:"boost"` // Information about the chat boost
+// This object represents a chat background.
+type ChatBackground struct {
+	// Type of the background
+	Type BackgroundType `json:"type"`
 }
 
-type ChatBoostRemoved struct {
-	Chat    Chat `json:"chat"`     // Chat which was boosted
-	BoostID Chat `json:"boost_id"` // Unique identifier of the boost
-
-	// Point in time (Unix timestamp) when the boost was removed
-	RemoveDate int `json:"remove_date"`
-
-	Source ChatBoostSource `json:"source"` // Source of the removed boost
+// This object represents a service message
+// about a video chat scheduled in the chat.
+type VideoChatScheduled struct {
+	// Point in time (Unix timestamp) when
+	// the video chat is supposed to be
+	// started by a chat administrator
+	StartDate int `json:"start_date"`
 }
 
-type ChatBoost struct {
-	BoostID string `json:"boost_id"` // Unique identifier of the boost
+// This object represents a service message
+// about a video chat started in the chat.
+// Currently holds no information.
+type VideoChatStarted struct{}
 
-	// Point in time (Unix timestamp) when the chat was boosted
-	AddDate int `json:"add_date"`
-
-	// Point in time (Unix timestamp) when the boost
-	// will automatically expire, unless the booster's
-	// Telegram Premium subscription is prolonged
-	ExpirationDate int `json:"expiration_date"`
-
-	// Source of the added boost
-	Source ChatBoostSource `json:"source"`
+// This object represents a service message
+// about a video chat ended in the chat.
+type VideoChatEnded struct {
+	// Video chat duration in seconds
+	Duration int `json:"duration"`
 }
 
-type ChatBoostSource struct {
-	// ChatBoostSourcePremium
-	// ChatBoostSourceGiftCode
-	// ChatBoostSourceGiveaway
+// This object represents a service message
+// about new members invited to a video chat.
+type VideoChatParticipantsInvited struct {
+	// New members that were invited to the video chat
+	Users []User `json:"users"`
 }
