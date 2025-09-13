@@ -16,10 +16,6 @@ const (
 	answerCallbackQuery = "/answerCallbackQuery"
 )
 
-type ReplyMarkup interface {
-	ValidateReplyMarkup() error
-}
-
 type SendMessageOptions struct {
 	// Unique identifier of the business connection on
 	// behalf of which the message will be sent
@@ -81,7 +77,7 @@ type SendMessageOptions struct {
 	// Additional interface options. A JSON-serialized object for
 	// an inline keyboard, custom reply keyboard, instructions to
 	// remove a reply keyboard or to force a reply from the user
-	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
+	ReplyMarkup any `json:"reply_markup,omitempty"`
 }
 
 // Use this method to send text messages.
@@ -190,7 +186,7 @@ type SendVoiceOptions struct {
 	// Additional interface options. A JSON-serialized object for
 	// an inline keyboard, custom reply keyboard, instructions to
 	// remove a reply keyboard or to force a reply from the user
-	ReplyMarkup ReplyMarkup `json:"reply_markup,omitempty"`
+	ReplyMarkup any `json:"reply_markup,omitempty"`
 }
 
 // Use this method to send audio files, if you want Telegram
