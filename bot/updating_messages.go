@@ -10,10 +10,113 @@ import (
 	"github.com/purkhanov/gogram/types"
 )
 
+// Updating messages
+// The following methods allow you to change an existing message
+// in the message history instead of sending a new one with a
+// result of an action. This is most useful for messages with
+// inline keyboards using callback queries, but can also help
+// reduce clutter in conversations with regular chat bots.
+
 const (
 	deleteMessageUrl  = "/deleteMessage"
 	deleteMessagesUrl = "/deleteMessages"
 )
+
+type EditMessageTextOptions struct {
+	// Unique identifier of the business connection on
+	// behalf of which the message to be edited was sent
+	BusinessConnectionID string `json:"business_connection_id,omitempty"`
+
+	// Required if inline_message_id is not specified.
+	// Unique identifier for the target chat or username
+	// of the target channel (in the format @channelusername)
+	ChatID string `json:"chat_id,omitempty"`
+
+	// Required if inline_message_id is not specified.
+	// Identifier of the message to edit
+	MessageID uint `json:"message_id,omitempty"`
+
+	// Required if chat_id and message_id are not specified.
+	// Identifier of the inline message
+	InlineMessageID string `json:"inline_message_id,omitempty"`
+
+	// New text of the message, 1-4096
+	// characters after entities parsing
+	Text string `json:"text" validate:"required"`
+
+	// Mode for parsing entities in the message text.
+	// See formatting options for more details.
+	ParseMode string `json:"parse_mode,omitempty"`
+
+	// A JSON-serialized list of special entities that appear in
+	// message text, which can be specified instead of parse_mode
+	Entities []types.MessageEntity `json:"entities,omitempty"`
+
+	// link_preview_options
+	LinkPreviewOptions *types.LinkPreviewOptions `json:"link_preview_options,omitempty"`
+
+	// A JSON-serialized object for an inline keyboard.
+	ReplyMarkup *types.InlineKeyboardMarkup `json:"reply_markup,omitempty"`
+}
+
+// Use this method to edit text and game messages.A JSON-serialized object for an inline keyboard.
+// On success, if the edited message is not an inline
+// message, the edited Message is returned, otherwise
+// True is returned. Note that business messages that
+// were not sent by the bot and do not contain an
+// inline keyboard can only be edited within 48
+// hours from the time they were sent.
+func (b *Bot) EditMessageText(options EditMessageTextOptions) (bool, error) {
+	if options.InlineMessageID != "" {
+		if options.ChatID != "" || options.MessageID != 0 {
+			return false, fmt.Errorf(
+				"ChatID and MessageID should not be specified for inline messages",
+			)
+		}
+	}
+
+	if options.ChatID == "" {
+		return false, fmt.Errorf("ChatID is required for non-inline messages")
+	}
+
+	if options.MessageID == 0 {
+		return false, fmt.Errorf("MessageID is required for non-inline messages")
+	}
+
+	if options.Text == "" {
+		return false, fmt.Errorf("Text is required")
+	}
+
+	data, err := json.Marshal(options)
+	if err != nil {
+		return false, err
+	}
+
+	requestUrl := b.urlWithToken + "/editMessageTextUrl"
+
+	resp, err := b.api.DoRequestWithTimeout(http.MethodPost, requestUrl, data)
+	if err != nil {
+		return false, err
+	}
+
+	var result types.APIResponse[bool]
+
+	if err := json.Unmarshal(resp, &result); err != nil {
+		return false, err
+	}
+
+	if !result.Ok {
+		return false, fmt.Errorf(
+			"telegram API error: code %d - %s",
+			result.ErrorCode, result.Description,
+		)
+	}
+
+	return true, nil
+}
+
+// Please note, that it is currently only possible to edit
+// messages without reply_markup or with inline keyboards.
 
 // Use this method to delete a message, including service
 // messages, with the following limitations:
