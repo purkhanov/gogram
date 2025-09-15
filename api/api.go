@@ -6,17 +6,23 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
-const contentTypeJSON = "application/json"
+const (
+	httpRequestTimeout = 5 * time.Second
+	contentTypeJSON    = "application/json"
+)
 
 type ApiClient struct {
 	httpClient *http.Client
+	ctx        context.Context
 }
 
-func NewClient(httpClient *http.Client) *ApiClient {
+func NewClient(httpClient *http.Client, ctx context.Context) *ApiClient {
 	return &ApiClient{
 		httpClient: httpClient,
+		ctx:        ctx,
 	}
 }
 
@@ -50,6 +56,19 @@ func (c *ApiClient) DoRequestWithData(method, url string, data []byte) ([]byte, 
 }
 
 func (c *ApiClient) DoRequestWithContextAndData(ctx context.Context, method, url string, data []byte) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(data))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Add("Content-Type", contentTypeJSON)
+
+	return c.DoRequest(req)
+}
+
+func (c *ApiClient) DoRequestWithTimeout(method, url string, data []byte) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(c.ctx, httpRequestTimeout)
+	defer cancel()
+
 	req, err := http.NewRequestWithContext(ctx, method, url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
