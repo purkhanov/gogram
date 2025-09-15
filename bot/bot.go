@@ -31,7 +31,7 @@ func NewBot(token string, webhookOptions *WebhookOptions) *Bot {
 	return &Bot{
 		token:          token,
 		urlWithToken:   fmt.Sprintf("%s/bot%s", baseUrl, token),
-		api:            api.NewClient(&http.Client{}),
+		api:            api.NewClient(&http.Client{}, ctx),
 		Ctx:            ctx,
 		Cancel:         cancel,
 		WebhookOptions: webhookOptions,
