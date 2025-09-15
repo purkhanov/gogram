@@ -59,13 +59,11 @@ type EditMessageTextOptions struct {
 	ReplyMarkup *types.InlineKeyboardMarkup `json:"reply_markup,omitempty"`
 }
 
-// Use this method to edit text and game messages.A JSON-serialized object for an inline keyboard.
-// On success, if the edited message is not an inline
-// message, the edited Message is returned, otherwise
-// True is returned. Note that business messages that
-// were not sent by the bot and do not contain an
-// inline keyboard can only be edited within 48
-// hours from the time they were sent.
+// Use this method to edit text and game messages. On success, if the
+// edited message is not an inline message, the edited Message is
+// returned, otherwise True is returned. Note that business messages
+// that were not sent by the bot and do not contain an inline keyboard
+// can only be edited within 48 hours from the time they were sent.
 func (b *Bot) EditMessageText(options EditMessageTextOptions) (bool, error) {
 	if options.InlineMessageID != "" {
 		if options.ChatID != "" || options.MessageID != 0 {
