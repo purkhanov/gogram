@@ -82,7 +82,7 @@ func (b *Bot) EditMessageText(options EditMessageTextOptions) (bool, error) {
 	}
 
 	if options.Text == "" {
-		return false, fmt.Errorf("Text is required")
+		return false, fmt.Errorf("text is required")
 	}
 
 	data, err := json.Marshal(options)
