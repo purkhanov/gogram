@@ -82,14 +82,14 @@ type SendMessageOptions struct {
 
 // Use this method to send text messages.
 // On success, the sent Message is returned.
-func (b *Bot) SendMessage(params SendMessageOptions) error {
+func (b *Bot) SendMessage(params SendMessageOptions) (types.Message, error) {
 	if err := utils.ValidateStruct(params); err != nil {
-		return err
+		return types.Message{}, err
 	}
 
 	data, err := json.Marshal(params)
 	if err != nil {
-		return fmt.Errorf("failed to marshal params: %w", err)
+		return types.Message{}, fmt.Errorf("failed to marshal params: %w", err)
 	}
 
 	c, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
@@ -99,22 +99,22 @@ func (b *Bot) SendMessage(params SendMessageOptions) error {
 		c, http.MethodPost, b.urlWithToken+sendMessageUrl, data,
 	)
 	if err != nil {
-		return err
+		return types.Message{}, err
 	}
 
 	var result types.APIResponse[types.Message]
 
 	if err := json.Unmarshal(resp, &result); err != nil {
-		return fmt.Errorf("failed to unmarshal response: %w", err)
+		return types.Message{}, fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 
 	if !result.Ok {
-		return fmt.Errorf(
+		return result.Result, fmt.Errorf(
 			"telegram API error: code %d - %s", result.ErrorCode, result.Description,
 		)
 	}
 
-	return nil
+	return result.Result, nil
 }
 
 type SendVoiceOptions struct {
