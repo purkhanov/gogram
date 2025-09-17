@@ -1,5 +1,13 @@
 package types
 
+const (
+	Star = "XTR" // Telegram stars
+	EUR  = "EUR" // Euro 0,88 - 8 817,10 €
+	USD  = "USD" // United States Dollar 1.00 - 10,000.00 $
+	RUB  = "RUB" // Russian Ruble  	87.73 - 877 271.92 RUB
+	KZT  = "KZT" // Kazakhstani Tenge 517.84 - 5 178 372.13 KZT
+)
+
 // This object contains basic information about a
 // successful payment. Note that if the buyer initiates
 // a chargeback with the relevant payment provider
