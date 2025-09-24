@@ -19,7 +19,7 @@ type ApiClient struct {
 	ctx        context.Context
 }
 
-func NewClient(httpClient *http.Client, ctx context.Context) *ApiClient {
+func NewClient(ctx context.Context, httpClient *http.Client, ) *ApiClient {
 	return &ApiClient{
 		httpClient: httpClient,
 		ctx:        ctx,
