@@ -165,7 +165,7 @@ func (b *Bot) SendInvoice(param SendInvoiceOptions) error {
 		return err
 	}
 
-	c, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
+	c, cancel := context.WithTimeout(b.ctx, httpRequestTimeout)
 	defer cancel()
 
 	resp, err := b.api.DoRequestWithContextAndData(
@@ -217,7 +217,7 @@ func (b *Bot) AnswerPreCheckoutQuery(params AnswerPreCheckoutQueryOptions) error
 		return err
 	}
 
-	c, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
+	c, cancel := context.WithTimeout(b.ctx, httpRequestTimeout)
 	defer cancel()
 
 	resp, err := b.api.DoRequestWithContextAndData(
@@ -351,7 +351,7 @@ func (b *Bot) CreateInvoiceLink(params CreateInvoiceLinkOptions) (string, error)
 		return "", err
 	}
 
-	c, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
+	c, cancel := context.WithTimeout(b.ctx, httpRequestTimeout)
 	defer cancel()
 
 	resp, err := b.api.DoRequestWithContextAndData(
@@ -413,7 +413,7 @@ func (b *Bot) AnswerShippingQuery(params AnswerShippingQueryOptions) error {
 		return err
 	}
 
-	c, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
+	c, cancel := context.WithTimeout(b.ctx, httpRequestTimeout)
 	defer cancel()
 
 	resp, err := b.api.DoRequestWithContextAndData(

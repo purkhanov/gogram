@@ -92,7 +92,7 @@ func (b *Bot) SendMessage(params SendMessageOptions) (types.Message, error) {
 		return types.Message{}, fmt.Errorf("failed to marshal params: %w", err)
 	}
 
-	c, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
+	c, cancel := context.WithTimeout(b.ctx, httpRequestTimeout)
 	defer cancel()
 
 	resp, err := b.api.DoRequestWithContextAndData(
@@ -235,7 +235,7 @@ func (b *Bot) AnswerCallbackQuery(params AnswerCallbackQueryOptions) error {
 		return err
 	}
 
-	c, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
+	c, cancel := context.WithTimeout(b.ctx, httpRequestTimeout)
 	defer cancel()
 
 	resp, err := b.api.DoRequestWithContextAndData(

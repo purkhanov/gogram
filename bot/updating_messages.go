@@ -30,7 +30,7 @@ type EditMessageTextOptions struct {
 	// Required if inline_message_id is not specified.
 	// Unique identifier for the target chat or username
 	// of the target channel (in the format @channelusername)
-	ChatID string `json:"chat_id,omitempty"`
+	ChatID uint `json:"chat_id,omitempty"`
 
 	// Required if inline_message_id is not specified.
 	// Identifier of the message to edit
@@ -66,14 +66,14 @@ type EditMessageTextOptions struct {
 // can only be edited within 48 hours from the time they were sent.
 func (b *Bot) EditMessageText(options EditMessageTextOptions) (bool, error) {
 	if options.InlineMessageID != "" {
-		if options.ChatID != "" || options.MessageID != 0 {
+		if options.ChatID != 0 || options.MessageID != 0 {
 			return false, fmt.Errorf(
 				"ChatID and MessageID should not be specified for inline messages",
 			)
 		}
 	}
 
-	if options.ChatID == "" {
+	if options.ChatID == 0 {
 		return false, fmt.Errorf("ChatID is required for non-inline messages")
 	}
 
@@ -90,24 +90,107 @@ func (b *Bot) EditMessageText(options EditMessageTextOptions) (bool, error) {
 		return false, err
 	}
 
-	requestUrl := b.urlWithToken + "/editMessageTextUrl"
+	requestUrl := b.urlWithToken + "/editMessageText"
 
 	resp, err := b.api.DoRequestWithTimeout(http.MethodPost, requestUrl, data)
 	if err != nil {
 		return false, err
 	}
 
-	var result types.APIResponse[bool]
+	var msgResult types.APIResponse[bool]
+	var boolResult types.APIResponse[bool]
 
-	if err := json.Unmarshal(resp, &result); err != nil {
-		return false, err
+	if options.InlineMessageID != "" {
+		if err := json.Unmarshal(resp, &boolResult); err != nil {
+			return false, err
+		}
+
+		if !boolResult.Ok {
+			return false, fmt.Errorf(
+				"telegram API error: code %d - %s",
+				boolResult.ErrorCode, boolResult.Description,
+			)
+		}
+
+		return boolResult.Result, nil
+
+	} else {
+		if err := json.Unmarshal(resp, &msgResult); err != nil {
+			return false, err
+		}
+
+		if !msgResult.Ok {
+			return false, fmt.Errorf(
+				"telegram API error: code %d - %s",
+				msgResult.ErrorCode, msgResult.Description,
+			)
+		}
+
+		return msgResult.Result, nil
 	}
 
-	if !result.Ok {
-		return false, fmt.Errorf(
-			"telegram API error: code %d - %s",
-			result.ErrorCode, result.Description,
-		)
+}
+
+type EditMessageCaptionOptions struct {
+	// Unique identifier of the business connection on
+	// behalf of which the message to be edited was sent
+	BusinessConnectionID string `json:"business_connection_id,omitempty"`
+
+	// Required if inline_message_id is not specified.
+	// Unique identifier for the target chat or username
+	// of the target channel (in the format @channelusername)
+	ChatID string `json:"chat_id,omitempty"`
+
+	// Required if inline_message_id is not specified.
+	// Identifier of the message to edit
+	MessageID int `json:"message_id,omitempty"`
+
+	// Required if chat_id and message_id are not specified.
+	// Identifier of the inline message
+	InlineMessageID string `json:"inline_message_id,omitempty"`
+
+	// New caption of the message, 0-1024
+	// characters after entities parsing
+	Caption string `json:"caption,omitempty"`
+
+	// Mode for parsing entities in the message caption.
+	// See formatting options for more details.
+	ParseMode string `json:"parse_mode,omitempty"`
+
+	// A JSON-serialized list of special entities that appear in
+	// the caption, which can be specified instead of parse_mode
+	CaptionEntities []types.MessageEntity `json:"caption_entities,omitempty"`
+
+	// Pass True, if the caption must be shown above the message media.
+	// Supported only for animation, photo and video messages.
+	ShowCaptionAboveMedia bool `json:"show_caption_above_media,omitempty"`
+
+	// A JSON-serialized object for an inline keyboard.
+	ReplyMarkup *types.InlineKeyboardMarkup `json:"reply_markup,omitempty"`
+}
+
+// Use this method to edit captions of messages.
+// On success, if the edited message is not an
+// inline message, the edited Message is returned,
+// otherwise True is returned. Note that business
+// messages that were not sent by the bot and do
+// not contain an inline keyboard can only be edited
+// within 48 hours from the time they were sent.
+func (b *Bot) EditMessageCaption(options EditMessageCaptionOptions) (bool, error) {
+	if options.InlineMessageID != "" {
+		if options.ChatID != "" || options.MessageID != 0 {
+			return false, fmt.Errorf(
+				"ChatID and MessageID should not be specified for inline messages",
+			)
+		}
+	}
+
+	if options.ChatID == "" {
+		return false, fmt.Errorf("ChatID is required for non-inline messages")
+	}
+
+	if options.MessageID == 0 {
+		return false, fmt.Errorf("MessageID is required for non-inline messages")
 	}
 
 	return true, nil
@@ -164,7 +247,7 @@ func (b *Bot) DeleteMessages(chatID uint, messageIDs []uint) error {
 }
 
 func (b *Bot) deleteMsgs(data map[string]any, url string) error {
-	c, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
+	c, cancel := context.WithTimeout(b.ctx, httpRequestTimeout)
 	defer cancel()
 
 	dataByte, err := json.Marshal(data)

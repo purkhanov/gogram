@@ -11,29 +11,19 @@ import (
 
 const (
 	baseUrl            = "https://api.telegram.org"
-	contentTypeJSON    = "application/json"
 	httpRequestTimeout = 5 * time.Second
 )
 
 type Bot struct {
-	token        string
 	urlWithToken string
 	api          *api.ApiClient
-	Ctx          context.Context
-	Cancel       context.CancelFunc
-
-	WebhookOptions *WebhookOptions
+	ctx          context.Context
 }
 
-func NewBot(token string, webhookOptions *WebhookOptions) *Bot {
-	ctx, cancel := context.WithCancel(context.Background())
-
+func NewBot(ctx context.Context, token string) *Bot {
 	return &Bot{
-		token:          token,
-		urlWithToken:   fmt.Sprintf("%s/bot%s", baseUrl, token),
-		api:            api.NewClient(&http.Client{}, ctx),
-		Ctx:            ctx,
-		Cancel:         cancel,
-		WebhookOptions: webhookOptions,
+		urlWithToken: fmt.Sprintf("%s/bot%s", baseUrl, token),
+		api:          api.NewClient(ctx, &http.Client{}),
+		ctx:          ctx,
 	}
 }

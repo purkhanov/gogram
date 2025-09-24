@@ -120,27 +120,27 @@ type WebhookOptions struct {
 // specify secret data in the parameter secret_token. If specified, the
 // request will contain a header “X-Telegram-Bot-Api-Secret-Token” with
 // the secret token as content.
-func (b *Bot) SetWebhook() (string, error) {
-	if err := utils.ValidateStruct(*b.WebhookOptions); err != nil {
+func (b *Bot) SetWebhook(options WebhookOptions) (string, error) {
+	if err := utils.ValidateStruct(options); err != nil {
 		return "", fmt.Errorf("invalid webhook parameters: %w", err)
 	}
 
-	if !strings.HasPrefix(b.WebhookOptions.URL, "https://") {
+	if !strings.HasPrefix(options.URL, "https://") {
 		return "", errors.New("webhook URL must use HTTPS")
 	}
 
 	fullUrl := b.urlWithToken + setWebhookUrl
 
-	c, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
+	c, cancel := context.WithTimeout(b.ctx, httpRequestTimeout)
 	defer cancel()
 
 	var resp []byte
 	var err error
 
-	if b.WebhookOptions.Certificate != "" {
-		resp, err = b.setWebhookWithCertificate(c, fullUrl, b.WebhookOptions)
+	if options.Certificate != "" {
+		resp, err = b.setWebhookWithCertificate(c, fullUrl, options)
 	} else {
-		resp, err = b.setWebhookWithoutCertificate(c, fullUrl, b.WebhookOptions)
+		resp, err = b.setWebhookWithoutCertificate(c, fullUrl, options)
 	}
 
 	if err != nil {
@@ -151,7 +151,7 @@ func (b *Bot) SetWebhook() (string, error) {
 }
 
 func (b *Bot) setWebhookWithoutCertificate(
-	ctx context.Context, fullURL string, params *WebhookOptions,
+	ctx context.Context, fullURL string, params WebhookOptions,
 ) ([]byte, error) {
 	data, err := json.Marshal(params)
 	if err != nil {
@@ -164,7 +164,7 @@ func (b *Bot) setWebhookWithoutCertificate(
 }
 
 func (b *Bot) setWebhookWithCertificate(
-	c context.Context, fullURL string, params *WebhookOptions,
+	c context.Context, fullURL string, params WebhookOptions,
 ) ([]byte, error) {
 	// Validate certificate file exists and is readable
 	fileInfo, err := os.Stat(params.Certificate)
@@ -283,7 +283,7 @@ func (b *Bot) DeleteWebhook(dropPendingUpdates bool) (string, error) {
 		return "", fmt.Errorf("cannot to marshal: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(b.Ctx, httpRequestTimeout)
+	ctx, cancel := context.WithTimeout(b.ctx, httpRequestTimeout)
 	defer cancel()
 
 	resp, err := b.api.DoRequestWithContextAndData(ctx, http.MethodPost, fullURL, data)
