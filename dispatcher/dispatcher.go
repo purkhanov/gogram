@@ -1,6 +1,7 @@
 package dispatcher
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"sync"
@@ -20,7 +21,7 @@ const (
 )
 
 type Dispatcher struct {
-	*bot.Bot
+	Bot         *bot.Bot
 	updatesChan chan *types.Update
 	nextOffset  int
 
@@ -28,6 +29,9 @@ type Dispatcher struct {
 	webhookServerMu sync.RWMutex
 
 	handlers handlers
+
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 type handlers struct {
@@ -37,27 +41,23 @@ type handlers struct {
 	shippingQuery    shippingQueryHandlerFunc
 }
 
-func NewDispatcher(token string, webhookOptions *bot.WebhookOptions) *Dispatcher {
-	botInstance := bot.NewBot(token, webhookOptions)
+func NewDispatcher(token string) *Dispatcher {
+	ctx, cancel := context.WithCancel(context.Background())
 
-	if webhookOptions != nil {
-		res, err := botInstance.SetWebhook()
-		if err != nil {
-			log.Fatal("Failed to set webhook: ", err)
-		}
-		log.Println(res)
-	}
+	botInstance := bot.NewBot(ctx, token)
 
 	return &Dispatcher{
 		Bot:         botInstance,
 		updatesChan: make(chan *types.Update, bufferSize),
+		ctx:         ctx,
+		cancel:      cancel,
 	}
 }
 
 func (d *Dispatcher) processUpdates(updatesChan <-chan *types.Update) {
 	for {
 		select {
-		case <-d.Ctx.Done():
+		case <-d.ctx.Done():
 			return
 
 		case update, ok := <-updatesChan:
@@ -98,7 +98,7 @@ func (d *Dispatcher) Shutdown() {
 		d.shutdownWebhookServer()
 	}
 
-	d.Cancel()
+	d.cancel()
 
 	time.Sleep(1 * time.Second)
 }

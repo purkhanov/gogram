@@ -10,16 +10,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/purkhanov/gogram/bot"
 	"github.com/purkhanov/gogram/types"
 )
 
 const webhookSecretToken = "X-Telegram-Bot-Api-Secret-Token"
 
-func (d *Dispatcher) StartWebhookServer(port uint16) error {
-	if d.WebhookOptions == nil {
-		return fmt.Errorf("webhookOptions is empty")
-	}
-
+func (d *Dispatcher) StartWebhookServer(port uint16, options bot.WebhookOptions) error {
 	if port == 0 {
 		return errors.New("port cannot be zero")
 	}
@@ -30,9 +27,9 @@ func (d *Dispatcher) StartWebhookServer(port uint16) error {
 			return
 		}
 
-		if d.WebhookOptions != nil && d.WebhookOptions.SecretToken != "" {
+		if options.SecretToken != "" {
 			receivedToken := r.Header.Get(webhookSecretToken)
-			expectedToken := d.WebhookOptions.SecretToken
+			expectedToken := options.SecretToken
 
 			if receivedToken != expectedToken {
 				log.Printf("Invalid secret token: received '%s', expected '%s'", receivedToken, expectedToken)
@@ -68,7 +65,7 @@ func (d *Dispatcher) StartWebhookServer(port uint16) error {
 			log.Printf("Timeout sending update to channel")
 			http.Error(w, "Service unavailable", http.StatusServiceUnavailable)
 
-		case <-d.Ctx.Done():
+		case <-d.ctx.Done():
 			log.Printf("Dispatcher stopped, cannot process update")
 			http.Error(w, "Service unavailable", http.StatusServiceUnavailable)
 		}
@@ -106,7 +103,7 @@ func (d *Dispatcher) shutdownWebhookServer() {
 	if server != nil {
 		log.Println("ShutdownWebhookServer: shutting down HTTP server")
 
-		ctx, cancel := context.WithTimeout(d.Ctx, shutdownTimeout)
+		ctx, cancel := context.WithTimeout(d.ctx, shutdownTimeout)
 		defer cancel()
 
 		if err := server.Shutdown(ctx); err != nil {
