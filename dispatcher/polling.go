@@ -4,14 +4,8 @@ import (
 	"context"
 	"errors"
 	"log"
-	"time"
 
 	"github.com/purkhanov/gogram/bot"
-)
-
-const (
-	pollingTimeout = 3600
-	sleepTime      = 1 * time.Second
 )
 
 func (d *Dispatcher) StartPolling(skipUpdates bool) error {
@@ -21,10 +15,6 @@ func (d *Dispatcher) StartPolling(skipUpdates bool) error {
 
 	log.Println("starting polling for updates...")
 
-	params := bot.GetUpdatesOptions{
-		Timeout: pollingTimeout,
-	}
-
 	go func() {
 		defer close(d.updatesChan)
 
@@ -33,7 +23,7 @@ func (d *Dispatcher) StartPolling(skipUpdates bool) error {
 			case <-d.ctx.Done():
 				return
 			default:
-				params.Offset = d.nextOffset
+				params := bot.GetUpdatesOptions{Offset: d.nextOffset}
 				updates, err := d.Bot.GetUpdates(params)
 				if err != nil {
 					if errors.Is(err, context.Canceled) {

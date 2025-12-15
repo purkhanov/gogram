@@ -8,10 +8,7 @@ import (
 	"github.com/purkhanov/gogram/types"
 )
 
-const (
-	getUpdatesUrl  = "/getUpdates"
-	updatesTimeout = "3600"
-)
+const getUpdatesUrl = "/getUpdates"
 
 type GetUpdatesOptions struct {
 	// Identifier of the first update to be returned. Must be greater
@@ -58,7 +55,9 @@ func (b *Bot) GetUpdates(params GetUpdatesOptions) ([]*types.Update, error) {
 		return nil, fmt.Errorf("failed to marshal params: %v", err)
 	}
 
-	resp, err := b.api.DoRequestWithContextAndData(b.ctx, http.MethodPost, b.urlWithToken+getUpdatesUrl, data)
+	resp, err := b.api.DoRequestWithContextAndData(
+		b.ctx, http.MethodPost, b.urlWithToken+getUpdatesUrl, data,
+	)
 	if err != nil {
 		return nil, err
 	}

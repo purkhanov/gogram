@@ -19,7 +19,7 @@ type ApiClient struct {
 	ctx        context.Context
 }
 
-func NewClient(ctx context.Context, httpClient *http.Client, ) *ApiClient {
+func NewClient(ctx context.Context, httpClient *http.Client) *ApiClient {
 	return &ApiClient{
 		httpClient: httpClient,
 		ctx:        ctx,
@@ -39,7 +39,7 @@ func (c *ApiClient) DoRequest(request *http.Request) ([]byte, error) {
 	}
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error status code: %s, Body: %s", response.Status, string(respBody))
+		return respBody, fmt.Errorf("error status code: %s", response.Status)
 	}
 
 	return respBody, nil
