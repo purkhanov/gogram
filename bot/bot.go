@@ -21,9 +21,13 @@ type Bot struct {
 }
 
 func NewBot(ctx context.Context, token string) *Bot {
+	httpClient := &http.Client{
+		Transport: &http.Transport{},
+	}
+
 	return &Bot{
 		urlWithToken: fmt.Sprintf("%s/bot%s", baseUrl, token),
-		api:          api.NewClient(ctx, &http.Client{}),
+		api:          api.NewClient(ctx, httpClient),
 		ctx:          ctx,
 	}
 }
