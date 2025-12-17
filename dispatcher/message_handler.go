@@ -1,11 +1,13 @@
 package dispatcher
 
 import (
+	"context"
+
 	filters "github.com/purkhanov/gogram/filter"
 	"github.com/purkhanov/gogram/types"
 )
 
-type messageHandlerFunc func(*types.Message)
+type messageHandlerFunc func(context.Context, *types.Message)
 
 type messageHandler struct {
 	filters []filters.MessageFilter
@@ -38,6 +40,6 @@ func (d *Dispatcher) handleMessage(msg *types.Message) {
 			continue
 		}
 
-		message.handler(msg)
+		message.handler(d.ctx, msg)
 	}
 }

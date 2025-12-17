@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/purkhanov/gogram/api"
 	"github.com/purkhanov/gogram/bot"
 	"github.com/purkhanov/gogram/types"
 )
@@ -57,7 +58,7 @@ func (d *Dispatcher) StartWebhookServer(port uint16, options bot.WebhookOptions)
 		}
 
 		select {
-		case d.updatesChan <- &update:
+		case d.updatesChan <- update:
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("OK"))
 
@@ -124,16 +125,16 @@ func (d *Dispatcher) GinWebhookHandler(ctx ginContext) {
 	var update types.Update
 
 	if err := ctx.ShouldBindJSON(&update); err != nil {
-		ctx.JSON(http.StatusBadRequest, map[string]any{
-			"error":   "Invalid JSON",
-			"details": err.Error(),
+		ctx.JSON(http.StatusBadRequest, api.ApiResponse{
+			Message: "Invalid JSON",
+			Error:   err.Error(),
 		})
 
 		return
 	}
 
-	go d.checkUpdate(&update)
+	go d.checkUpdate(update)
 
-	ctx.JSON(http.StatusOK, map[string]string{"status": "accepted"})
+	ctx.JSON(http.StatusOK, api.ApiResponse{Status: "accepted"})
 
 }

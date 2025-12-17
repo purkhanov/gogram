@@ -22,7 +22,7 @@ const (
 
 type Dispatcher struct {
 	Bot         *bot.Bot
-	updatesChan chan *types.Update
+	updatesChan chan types.Update
 	nextOffset  int
 
 	webhookServer   *http.Server
@@ -48,13 +48,13 @@ func NewDispatcher(token string) *Dispatcher {
 
 	return &Dispatcher{
 		Bot:         botInstance,
-		updatesChan: make(chan *types.Update, bufferSize),
+		updatesChan: make(chan types.Update, bufferSize),
 		ctx:         ctx,
 		cancel:      cancel,
 	}
 }
 
-func (d *Dispatcher) processUpdates(updatesChan <-chan *types.Update) {
+func (d *Dispatcher) processUpdates(updatesChan <-chan types.Update) {
 	for {
 		select {
 		case <-d.ctx.Done():
@@ -70,7 +70,7 @@ func (d *Dispatcher) processUpdates(updatesChan <-chan *types.Update) {
 	}
 }
 
-func (d *Dispatcher) checkUpdate(update *types.Update) {
+func (d *Dispatcher) checkUpdate(update types.Update) {
 	switch {
 	case update.Message != nil:
 		d.handleMessage(update.Message)
