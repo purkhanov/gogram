@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"time"
 )
@@ -20,6 +21,10 @@ type ApiClient struct {
 }
 
 func NewClient(ctx context.Context, httpClient *http.Client) *ApiClient {
+	if httpClient == nil {
+		log.Fatal("http client can not be nil")
+	}
+
 	return &ApiClient{
 		httpClient: httpClient,
 		ctx:        ctx,
