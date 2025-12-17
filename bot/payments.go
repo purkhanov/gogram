@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/purkhanov/gogram/api"
 	"github.com/purkhanov/gogram/types"
 	"github.com/purkhanov/gogram/utils"
 )
@@ -176,7 +177,7 @@ func (b *Bot) SendInvoice(param SendInvoiceOptions) error {
 		return err
 	}
 
-	var result types.APIResponse[types.Message]
+	var result api.APIResponse[types.Message]
 
 	if err := json.Unmarshal(resp, &result); err != nil {
 		return err
@@ -227,7 +228,7 @@ func (b *Bot) AnswerPreCheckoutQuery(params AnswerPreCheckoutQueryOptions) error
 		return err
 	}
 
-	var result types.APIResponse[bool]
+	var result api.APIResponse[bool]
 
 	if err := json.Unmarshal(resp, &result); err != nil {
 		return err
@@ -361,7 +362,7 @@ func (b *Bot) CreateInvoiceLink(params CreateInvoiceLinkOptions) (string, error)
 		return "", err
 	}
 
-	var result types.APIResponse[string]
+	var result api.APIResponse[string]
 
 	if err := json.Unmarshal(resp, &result); err != nil {
 		return "", err
@@ -423,7 +424,7 @@ func (b *Bot) AnswerShippingQuery(params AnswerShippingQueryOptions) error {
 		return err
 	}
 
-	var result types.APIResponse[bool]
+	var result api.APIResponse[bool]
 
 	if err := json.Unmarshal(resp, &result); err != nil {
 		return err

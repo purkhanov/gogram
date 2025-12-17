@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/purkhanov/gogram/types"
+	"github.com/purkhanov/gogram/api"
 	"github.com/purkhanov/gogram/utils"
 )
 
@@ -260,7 +260,7 @@ func (b *Bot) setWebhookWithCertificate(
 }
 
 func (b *Bot) parseWebhookResponse(resp []byte) (string, error) {
-	var result types.APIResponse[bool]
+	var result api.APIResponse[bool]
 
 	if err := json.Unmarshal(resp, &result); err != nil {
 		return "", fmt.Errorf("failed to parse response: %w", err)

@@ -7,6 +7,7 @@ import (
 
 	"net/http"
 
+	"github.com/purkhanov/gogram/api"
 	"github.com/purkhanov/gogram/types"
 )
 
@@ -97,8 +98,8 @@ func (b *Bot) EditMessageText(options EditMessageTextOptions) (bool, error) {
 		return false, err
 	}
 
-	var msgResult types.APIResponse[bool]
-	var boolResult types.APIResponse[bool]
+	var msgResult api.APIResponse[bool]
+	var boolResult api.APIResponse[bool]
 
 	if options.InlineMessageID != "" {
 		if err := json.Unmarshal(resp, &boolResult); err != nil {
@@ -260,7 +261,7 @@ func (b *Bot) deleteMsgs(data map[string]any, url string) error {
 		return err
 	}
 
-	var result types.APIResponse[bool]
+	var result api.APIResponse[bool]
 
 	if err := json.Unmarshal(resp, &result); err != nil {
 		return err

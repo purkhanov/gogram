@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/purkhanov/gogram/api"
 	"github.com/purkhanov/gogram/types"
 	"github.com/purkhanov/gogram/utils"
 )
@@ -102,7 +103,7 @@ func (b *Bot) SendMessage(params SendMessageOptions) (types.Message, error) {
 		return types.Message{}, err
 	}
 
-	var result types.APIResponse[types.Message]
+	var result api.APIResponse[types.Message]
 
 	if err := json.Unmarshal(resp, &result); err != nil {
 		return types.Message{}, fmt.Errorf("failed to unmarshal response: %w", err)
@@ -195,7 +196,7 @@ type SendVoiceOptions struct {
 // returned. Bots can currently send audio files of up to 50 MB in
 // size, this limit may be changed in the future.
 func (b *Bot) SendAudio(params SendVoiceOptions) (types.Message, error) {
-	var response types.APIResponse[types.Message]
+	var response api.APIResponse[types.Message]
 
 	return response.Result, nil
 }
@@ -245,7 +246,7 @@ func (b *Bot) AnswerCallbackQuery(params AnswerCallbackQueryOptions) error {
 		return err
 	}
 
-	var result types.APIResponse[bool]
+	var result api.APIResponse[bool]
 
 	if err := json.Unmarshal(resp, &result); err != nil {
 		return fmt.Errorf("failed to unmarshal result: %w", err)

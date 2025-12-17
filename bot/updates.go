@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/purkhanov/gogram/api"
 	"github.com/purkhanov/gogram/types"
 )
 
@@ -45,7 +46,7 @@ type GetUpdatesOptions struct {
 
 // Use this method to receive incoming updates using long polling.
 // Returns an Array of Update objects.
-func (b *Bot) GetUpdates(params GetUpdatesOptions) ([]*types.Update, error) {
+func (b *Bot) GetUpdates(params GetUpdatesOptions) ([]types.Update, error) {
 	if params.Limit != 0 && params.Limit > 100 {
 		return nil, fmt.Errorf("limit must be between 1 and 100")
 	}
@@ -62,7 +63,7 @@ func (b *Bot) GetUpdates(params GetUpdatesOptions) ([]*types.Update, error) {
 		return nil, err
 	}
 
-	var result types.APIResponse[[]*types.Update]
+	var result api.APIResponse[[]types.Update]
 
 	if err := json.Unmarshal(resp, &result); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal result: %w", err)
